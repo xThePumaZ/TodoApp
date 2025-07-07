@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="module" src="{{ asset('js/dashboard.js') }}"></script>
+{% endblock %}
+
+{% block body %}
+    <div class="min-h-screen bg-gray-100">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center justify-between mb-8">
+                <h1 class="text-2xl font-bold text-left">Task Dashboard</h1>
+                <a href=""
+                   class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+                    Add new Task
+                </a>
+            </div>
+            <div class="flex gap-6 overflow-x-auto">
+                {% for status, tasks in tasksByStatus %}
+                    <div class="flex-1 min-w-[250px] bg-white rounded shadow p-6">
+                        <h2 class="text-xl font-semibold mb-4 text-center">{{ status|title }}</h2>
+                        <div id="task-list-{{ status }}" class="space-y-4 task-list" data-status="{{ status }}">
+                            {% for task in tasks %}
+                                <div class="relative flex flex-col bg-white shadow-sm border border-slate-200 rounded-lg w-full" data-task-id="{{ task.id }}">
+                                    <div class="mx-3 mb-0 border-b border-slate-200 pt-3 pb-2 px-1 flex items-center justify-between">
+                            <span class="text-sm font-medium text-slate-600">
+                                {{ task.title }}
+                            </span>
+                                        <form method="post" action="{{ path('app_task_remove', {id: task.id}) }}" onsubmit="return confirm('Wirklich löschen?');">
+                                            <button type="submit" class="ml-2 text-gray-400 hover:text-red-600">
+                                                <!-- Trash Icon -->
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                          d="M6 18L18 18M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2m2 0h-10m2 0v12a2 2 0 002 2h4a2 2 0 002-2V6"/>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="p-4">
+                                        <p class="text-slate-600 leading-normal font-light">
+                                            {{ task.description|default('Keine Beschreibung') }}
+                                        </p>
+                                        {% if task.dueDate %}
+                                            <span class="text-red-500 text-sm block mt-2">Fällig: {{ task.dueDate|date('Y-m-d') }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mx-3 border-t border-slate-200 pb-3 pt-2 px-1">
+                            <span class="text-sm text-slate-600 font-medium">
+                                Zuletzt aktualisiert: {{ task.updatedAt ? task.updatedAt|date('Y-m-d H:i') : task.createdAt|date('Y-m-d H:i') }}
+                            </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% if tasks is empty %}
+                            <p class="text-gray-400 text-center">Keine Tasks</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
