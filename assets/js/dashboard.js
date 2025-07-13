@@ -16,31 +16,25 @@ document.addEventListener('DOMContentLoaded', function () {
         dropTargetForElements({
             element: list,
             onDrop({source}) {
-                console.log('list:', list);
-                console.log('Item dropped:', source.element);
+                if (list.getAttribute('data-status') !== source.element.getAttribute('data-status')) {
+                    fetch(`/task/update_status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            task_id: source.element.getAttribute('data-task-id'),
+                            status: list.getAttribute('data-status'),
+                        }),
+                    }).then(r => {
+                        if (r.status === 200) {
+                            list.appendChild(source.element);
+                        } else {
+                            throw new Error('Network response was not ok');
+                        }
+                    });
 
-                var listStatus = list.getAttribute('data-status');
-                var itemId = source.element.getAttribute('data-task-id');
-
-                const response =  fetch(`/task/update_status`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        task_id: itemId,
-                        status: listStatus,
-                    }),
-                }).then(r => {
-                    if (r.status === 200) {
-                        list.appendChild(source.element);
-                        return r.json();
-                    } else {
-                        throw new Error('Network response was not ok');
-                    }
-
-                });
-
+                }
             },
         });
     })

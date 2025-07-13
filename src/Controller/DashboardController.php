@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Config\Priority;
 use App\Config\Status;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,7 +29,7 @@ class DashboardController extends AbstractController
                 $tasksByStatus[$status->name] = [];
             }
         }
-        return $this->render('dashboard.html.twig', ['tasksByStatus' => $tasksByStatus]);
+        return $this->render('dashboard.html.twig', ['tasksByStatus' => $tasksByStatus, 'priority' => Priority::cases() ]);
     }
 
 }
