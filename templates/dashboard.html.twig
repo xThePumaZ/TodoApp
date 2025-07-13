@@ -4,12 +4,15 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script type="module" src="{{ asset('js/dashboard.js') }}"></script>
-    <script src="https://unpkg.com/@material-tailwind/html@3.0.0-beta.7/dist/material-tailwind.umd.min.js"
-            defer></script>
+    <script src="https://unpkg.com/@material-tailwind/html@3.0.0-beta.7/dist/material-tailwind.umd.min.js" defer></script>
 {% endblock %}
 
 {% block body %}
+
+    <div {{ react_component('Hello', { fullName: 'Fabien' }) }}>
+        Loading... <i class="fas fa-cog fa-spin fa-3x"></i>
+    </div>
+
     <div class="min-h-screen bg-gray-100 dark:bg-gray-700">
         <div class="max-w-7xl mx-auto">
             <div class="flex items-center justify-between mb-8">
@@ -106,9 +109,7 @@
                                    class="w-full aria-disabled:cursor-not-allowed outline-none focus:outline-none text-slate-800 dark:text-white dark:placeholder-white placeholder:text-slate-600/60 bg-transparent ring-transparent border border-slate-200 transition-all duration-300 ease-in disabled:opacity-50 disabled:pointer-events-none data-[error=true]:border-error data-[success=true]:border-success select-none data-[shape=pill]:rounded-full text-sm rounded-md py-2 px-2.5 ring shadow-sm data-[icon-placement=start]:ps-9 data-[icon-placement=end]:pe-9 hover:border-slate-800 hover:ring-slate-800/10 focus:border-slate-800 focus:ring-slate-800/10 peer"/>
                         </div>
                     </div>
-                    <div class="mb-4 mt-2 space-y-1.5">
-                        {{ react_component('dashboard', { fullName: 'Fabien' }) }}>
-                    </div>
+                    <div class="mb-4 mt-2 space-y-1.5" {{ react_component('dashboardSelect') }}></div>
 
                     {#                    <div class="flex items-center gap-2"> #}
                     {#                        <label class="flex items-center cursor-pointer relative" for="checkbox-with-label"> #}
