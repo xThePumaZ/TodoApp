@@ -6,25 +6,26 @@
     <link rel="icon"
           href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
     {% block stylesheets %}
+            {{ encore_entry_link_tags('app') }}
         <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
     {% endblock %}
 
     {% block javascripts %}
+            {{ encore_entry_script_tags('app') }}
         {% block importmap %}{{ importmap('app') }}{% endblock %}
     {% endblock %}
 </head>
 <body class="bg-gray-100">
-<nav class="bg-white shadow mb-8">
+<nav class="bg-gray-100 dark:bg-gray-700 shadow mb-8">
     <div class="max-w-7xl mx-auto px-4">
         <div class="flex justify-between items-center h-16">
             <!-- Logo links -->
             <div class="flex-shrink-0">
-                <img class="h-10 w-auto inline" src="{{ asset('images/logo.svg') }}" alt="Logo">
-                <span class="ml-2 font-bold text-xl text-gray-700 align-middle">MeinProjekt</span>
+                <img class="h-10 w-auto inline dark:text-white" src="{{ asset('images/logo.svg') }}" alt="Logo">
             </div>
             <!-- User Area rechts -->
             <div class="flex items-center space-x-4">
-                <span class="text-gray-600">{{ app.user ? app.user.username : 'Gast' }}</span>
+                <span class="text-gray-600 dark:text-white">{{ app.user ? app.user.username : 'Gast' }}</span>
                 <img class="h-10 w-10 rounded-full border-2 border-gray-300 object-cover"
                      src="{{ app.user and app.user.profilePicture ? asset(app.user.profilePicture) : asset('images/default-avatar.png') }}"
                      alt="Profilbild">

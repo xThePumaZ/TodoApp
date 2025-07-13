@@ -24,7 +24,7 @@ class DashboardController extends AbstractController
                     $tasksByStatus[$task->getStatus()->name][] = $task;
                 }
             }
-            if (!array_key_exists($status->name,$tasksByStatus) && !is_null($status->name)) {
+            if (!array_key_exists($status->name,$tasksByStatus)) {
                 $tasksByStatus[$status->name] = [];
             }
         }

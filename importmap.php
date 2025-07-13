@@ -28,4 +28,25 @@ return [
     'sortablejs' => [
         'version' => '1.15.6',
     ],
+    '@material-tailwind/html' => [
+        'version' => '3.0.0-beta.7',
+    ],
+    '@atlaskit/pragmatic-drag-and-drop/element/adapter' => [
+        'version' => '1.7.4',
+    ],
+    '@babel/runtime/helpers/slicedToArray' => [
+        'version' => '7.27.6',
+    ],
+    '@babel/runtime/helpers/defineProperty' => [
+        'version' => '7.27.6',
+    ],
+    '@babel/runtime/helpers/toConsumableArray' => [
+        'version' => '7.27.6',
+    ],
+    'bind-event-listener' => [
+        'version' => '3.0.0',
+    ],
+    'raf-schd' => [
+        'version' => '4.0.3',
+    ],
 ];
