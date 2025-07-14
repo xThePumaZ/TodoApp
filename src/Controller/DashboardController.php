@@ -15,6 +15,10 @@ class DashboardController extends AbstractController
     #[Route('/dashboard', name: 'app_dashboard')]
     public function index(): Response
     {
+        if (!$this->getUser()) {
+            return $this->redirectToRoute('app_login');
+        }
+
         $tasks = $this->getUser()->getTasks();
         $statusList = Status::cases();
         $tasksByStatus = [];

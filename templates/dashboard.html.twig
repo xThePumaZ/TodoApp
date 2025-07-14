@@ -1,26 +1,21 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Task Dashboard{% endblock %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('app') }}
+{% endblock %}
 
 {% block javascripts %}
-    {{ parent() }}
-    <script src="https://unpkg.com/@material-tailwind/html@3.0.0-beta.7/dist/material-tailwind.umd.min.js" defer></script>
+    {{ encore_entry_script_tags('app') }}
 {% endblock %}
 
 {% block body %}
-
-    <div {{ react_component('Hello', { fullName: 'Fabien' }) }}>
-        Loading... <i class="fas fa-cog fa-spin fa-3x"></i>
-    </div>
-
     <div class="min-h-screen bg-gray-100 dark:bg-gray-700">
         <div class="max-w-7xl mx-auto">
             <div class="flex items-center justify-between mb-8">
                 <h1 class="text-2xl font-bold text-left dark:text-white">Task Dashboard</h1>
-                <button data-toggle="modal" data-target="#exampleModalForm" type="button"
-                        class="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                    Add new Task
-                </button>
+                <div {{ react_component('Dashboard/AddTaskForm') }}></div>
             </div>
             <div class="flex flex-wrap gap-6 ">
                 {% for status, tasks in tasksByStatus %}
@@ -109,26 +104,24 @@
                                    class="w-full aria-disabled:cursor-not-allowed outline-none focus:outline-none text-slate-800 dark:text-white dark:placeholder-white placeholder:text-slate-600/60 bg-transparent ring-transparent border border-slate-200 transition-all duration-300 ease-in disabled:opacity-50 disabled:pointer-events-none data-[error=true]:border-error data-[success=true]:border-success select-none data-[shape=pill]:rounded-full text-sm rounded-md py-2 px-2.5 ring shadow-sm data-[icon-placement=start]:ps-9 data-[icon-placement=end]:pe-9 hover:border-slate-800 hover:ring-slate-800/10 focus:border-slate-800 focus:ring-slate-800/10 peer"/>
                         </div>
                     </div>
-                    <div class="mb-4 mt-2 space-y-1.5" {{ react_component('dashboardSelect') }}></div>
-
-                    {#                    <div class="flex items-center gap-2"> #}
-                    {#                        <label class="flex items-center cursor-pointer relative" for="checkbox-with-label"> #}
-                    {#                            <input type="checkbox" checked #}
-                    {#                                   class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow-sm  border border-slate-200 checked:bg-slate-800 checked:border-slate-800" #}
-                    {#                                   id="checkbox-with-label"/> #}
-                    {#                            <span #}
-                    {#                                class="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"> #}
-                    {#                                    <svg fill="none" width="18px" height="18px" stroke-width="2" color="currentColor" #}
-                    {#                                         viewBox="0 0 24 24" #}
-                    {#                                         xmlns="http://www.w3.org/2000/svg"><path d="M5 13L9 17L19 7" #}
-                    {#                                                                                  stroke="currentColor" stroke-width="2" #}
-                    {#                                                                                  stroke-linecap="round" #}
-                    {#                                                                                  stroke-linejoin="round"></path></svg> #}
-                    {#                                </span> #}
-                    {#                        </label> #}
-                    {#                        <label class="cursor-pointer text-slate-600 antialiased" for="checkbox-with-label">Remember #}
-                    {#                            Me</label> #}
-                    {#                    </div> #}
+                                        <div class="flex items-center gap-2">
+                                            <label class="flex items-center cursor-pointer relative" for="checkbox-with-label">
+                                                <input type="checkbox" checked
+                                                       class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow-sm  border border-slate-200 checked:bg-slate-800 checked:border-slate-800"
+                                                       id="checkbox-with-label"/>
+                                                <span
+                                                    class="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                                        <svg fill="none" width="18px" height="18px" stroke-width="2" color="currentColor"
+                                                             viewBox="0 0 24 24"
+                                                             xmlns="http://www.w3.org/2000/svg"><path d="M5 13L9 17L19 7"
+                                                                                                      stroke="currentColor" stroke-width="2"
+                                                                                                      stroke-linecap="round"
+                                                                                                      stroke-linejoin="round"></path></svg>
+                                                    </span>
+                                            </label>
+                                            <label class="cursor-pointer text-slate-600 antialiased" for="checkbox-with-label">Remember
+                                                Me</label>
+                                        </div>
                 </div>
                 <div class=" px-4 pb-4 flex flex-col justify-end gap-2">
                     <button type="button"
