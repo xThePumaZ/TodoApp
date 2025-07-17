@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Config\Priority;
 use App\Config\Status;
 use App\Entity\Task;
+use App\Form\AddTaskFormType;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -61,26 +63,30 @@ class TaskController extends AbstractController
         return new Response(null, Response::HTTP_NOT_MODIFIED);
     }
 
+    #[Route('/task/addTask', name: 'app_task_addtask')]
     public function addTask(EntityManagerInterface $entityManager): Response
     {
-        $request = Request::createFromGlobals();
-        $requestContent = json_decode($request->getContent());
-
-        if (!$requestContent || !isset($requestContent->title) || !isset($requestContent->status)) {
-            return new Response('Invalid request data', Response::HTTP_BAD_REQUEST);
-        }
-
         $task = new Task();
-        $task->setTitle($requestContent->title);
-        $task->setStatus(Status::tryFrom($this->mapStatusToInt($requestContent->status)));
-        $task->setCreatedAt(new DateTimeImmutable());
-        $task->setUpdatedAt(new DateTime());
+        $form = $this->createForm(AddTaskFormType::class, $task);
+        $form->handleRequest(Request::createFromGlobals());
 
-        $entityManager->persist($task);
-        $entityManager->flush();
+        if ($form->isSubmitted() && $form->isValid()) {
+            $task = $form->getData();
+            $task->setCreatedAt(new DateTimeImmutable());
 
-        return new Response('Task added successfully', Response::HTTP_CREATED);
+            $priority =  Priority::tryFrom($form->get('priority')->getData());
+            if ($priority) {
+                $task->setPriority($priority);
+            } else {
+                return new Response('Invalid priority', Response::HTTP_BAD_REQUEST);
+            }
 
+            $entityManager->persist($task);
+            $entityManager->flush();
+
+            return new Response('Task added successfully', Response::HTTP_CREATED);
+        }
+        return new Response("", Response::HTTP_BAD_REQUEST);
     }
 
     private function mapStatusToInt(string $status): bool|int
