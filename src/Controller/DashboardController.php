@@ -33,10 +33,20 @@ class DashboardController extends AbstractController
                 $tasksByStatus[$status->name] = [];
             }
         }
-        return $this->render('dashboard.html.twig', ['tasksByStatus' => $tasksByStatus, 'priority' => Priority::cases() ]);
+        return $this->render('dashboard.html.twig', ['tasksByStatus' => $tasksByStatus, 'priority' => $this->mapPriorityToColour(Priority::cases()) ]);
     }
 
-    private function mapPriorityToColour($priority): string
+    private function mapPriorityToColour($priorities): array
+    {
+        $list = [];
+        foreach ($priorities as $priority) {
+           $list[$priority->value] = $this->getPriorityColor(Priority::tryFrom($priority->value));
+        }
+
+        return $list;
+    }
+
+    private function getPriorityColor(Priority $priority): string
     {
         return match ($priority) {
             Priority::HighPriority => 'bg-red-400',

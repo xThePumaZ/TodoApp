@@ -9,6 +9,8 @@
         "@symfony/ux-react": "file:vendor/symfony/ux-react/assets",
         "@symfony/ux-turbo": "file:vendor/symfony/ux-turbo/assets",
         "@symfony/webpack-encore": "^5.0.0",
+        "@types/react": "^19.1.8",
+        "@types/react-dom": "^19.1.6",
         "autoprefixer": "^10.4.21",
         "core-js": "^3.38.0",
         "postcss": "^8.5.6",

@@ -51,19 +51,19 @@ class Task
         return $this->id;
     }
 
-    public function getUserId(): ?int
+    public function getUserId(): User
     {
         return $this->user_id;
     }
 
-    public function setUserId(int $user_id): static
+    public function setUserId(User $user_id): static
     {
         $this->user_id = $user_id;
 
         return $this;
     }
 
-    public function getListId(): ?int
+    public function getListId(): Lists
     {
         return $this->list_id;
     }

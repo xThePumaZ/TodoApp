@@ -15,7 +15,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 sm:py-6 mb-4 sm:mb-8 gap-4">
                 <h1 class="text-xl sm:text-2xl font-bold text-left dark:text-white">Task Dashboard</h1>
-                <div {{ react_component('Dashboard/AddTaskForm',{ url: path('app_task_addtask') }) }}></div>
+                <div {{ react_component('Dashboard/AddTaskForm',{ url: path('app_task_addtask'), priorities: priority }) }}></div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {% for status, tasks in tasksByStatus %}

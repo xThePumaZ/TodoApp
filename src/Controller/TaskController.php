@@ -63,30 +63,56 @@ class TaskController extends AbstractController
         return new Response(null, Response::HTTP_NOT_MODIFIED);
     }
 
-    #[Route('/task/addTask', name: 'app_task_addtask')]
-    public function addTask(EntityManagerInterface $entityManager): Response
+    #[Route('/task/addTask', name: 'app_task_addtask', methods: ['POST'])]
+    public function addTask(Request $request, EntityManagerInterface $entityManager): Response
     {
-        $task = new Task();
-        $form = $this->createForm(AddTaskFormType::class, $task);
-        $form->handleRequest(Request::createFromGlobals());
+        try {
+            $task = new Task();
+            $title = $request->request->get('title');
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $task = $form->getData();
-            $task->setCreatedAt(new DateTimeImmutable());
+            $description = $request->request->get('description');
+            $priority = Priority::tryFrom($request->request->get('priority'));
+            $dueDateString = $request->request->get('due_date');
 
-            $priority =  Priority::tryFrom($form->get('priority')->getData());
-            if ($priority) {
-                $task->setPriority($priority);
-            } else {
-                return new Response('Invalid priority', Response::HTTP_BAD_REQUEST);
+            if (empty($title)) {
+                return new Response(null, Response::HTTP_BAD_REQUEST);
             }
 
+            if ($description) {
+                $task->setDescription($description);
+            }
+
+            if ($priority) {
+                $task->setPriority($priority);
+            }
+
+            if ($dueDateString) {
+                try {
+                    $dueDate = new \DateTime($dueDateString);
+                    $task->setDueDate($dueDate);
+                } catch (\Exception $e) {
+                    return new Response('Invalid date format', Response::HTTP_BAD_REQUEST);
+                }
+            }
+
+            $task->setTitle($title);
+
+            // Set default values
+            $task->setCreatedAt(new DateTimeImmutable());
+            $task->setUpdatedAt(new \DateTime());
+            $task->setStatus(Status::Open);
+
+            $this->getUser()->addTask($task);
             $entityManager->persist($task);
             $entityManager->flush();
 
+            // Return success response
             return new Response('Task added successfully', Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            // Log the error
+            error_log($e->getMessage());
+            return new Response('An error occurred while saving the task: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-        return new Response("", Response::HTTP_BAD_REQUEST);
     }
 
     private function mapStatusToInt(string $status): bool|int
