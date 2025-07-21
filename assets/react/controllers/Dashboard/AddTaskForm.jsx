@@ -13,9 +13,6 @@ import {DialogOpenButton} from "./AddTaskButton";
 
 export default function (props) {
 
-
-    console.log(props);
-
     // Form state
     const [formData, setFormData] = React.useState({
         title: "",

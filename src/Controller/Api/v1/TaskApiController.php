@@ -2,23 +2,22 @@
 
 declare(strict_types=1);
 
-namespace App\Controller;
+namespace App\Controller\Api\v1;
 
 use App\Config\Priority;
 use App\Config\Status;
 use App\Entity\Task;
-use App\Form\AddTaskFormType;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\HttpFoundation\Request;
 
-class TaskController extends AbstractController
+class TaskApiController extends AbstractController
 {
-    #[Route('/task/delete', name: 'app_task_remove', methods: ['POST'])]
+    #[Route('/api/v1/task/delete', name: 'app_task_remove', methods: ['POST'])]
     public function deleteTask(EntityManagerInterface $entityManager): Response
     {
         $request = Request::createFromGlobals();
@@ -32,7 +31,7 @@ class TaskController extends AbstractController
         return $this->redirectToRoute('app_dashboard');
     }
 
-    #[Route('/task/update_status', name: 'app_task_status_update', methods: ['POST'])]
+    #[Route('/api/v1/task/update_status', name: 'app_task_status_update', methods: ['POST'])]
     public function updateStatus(EntityManagerInterface $entityManager): Response
     {
         $request = Request::createFromGlobals();
@@ -58,12 +57,26 @@ class TaskController extends AbstractController
             $product->setUpdatedAt(new DateTime());
 
             $entityManager->flush();
-            return new Response(null, Response::HTTP_OK);
+
+            return $this->json(
+                array(
+                    'data' => $product,
+                    'message' => 'Task status updated successfully',
+                ),
+                Response::HTTP_OK
+            );
         }
-        return new Response(null, Response::HTTP_NOT_MODIFIED);
+        // If the status is the same, return a 304 Not Modified response
+        $this->json(
+            array(
+                'message' => 'Task status is already ' . $status->name,
+                'data' => $product,
+            ),
+            Response::HTTP_NOT_MODIFIED
+        );
     }
 
-    #[Route('/task/addTask', name: 'app_task_addtask', methods: ['POST'])]
+    #[Route('/api/v1/task/addTask', name: 'app_task_addtask', methods: ['POST'])]
     public function addTask(Request $request, EntityManagerInterface $entityManager): Response
     {
         try {
@@ -107,11 +120,9 @@ class TaskController extends AbstractController
             $entityManager->flush();
 
             // Return success response
-            return new Response('Task added successfully', Response::HTTP_CREATED);
+            return $this->json(array('data' => $task, 'message' => 'Task created successfully'), Response::HTTP_CREATED);
         } catch (\Exception $e) {
-            // Log the error
-            error_log($e->getMessage());
-            return new Response('An error occurred while saving the task: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->json(array('message' => 'Failed to create Task', 'data' => []), Response::HTTP_BAD_REQUEST);
         }
     }
 

@@ -61,6 +61,7 @@ export default function AccountSettings() {
         confirmPassword: null,
     });
     const [successMessage, setSuccessMessage] = React.useState<string>("");
+    const [errorMessage, setErrorMessage] = React.useState<string>("");
 
     // Handle profile image change
     const handleImageClick = (): void => {
@@ -95,19 +96,20 @@ export default function AccountSettings() {
         const formData = new FormData();
         formData.append('profileImage', imageFile);
 
+        console.log(formData);
+
         // Send the image to the server
-        fetch('/api/user/profile-image', {
+        fetch('/api/v1/user/change_picture', {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
             },
             body: formData,
         })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.message || 'Failed to upload profile image');
-                    });
+            .then(async response => {
+                if (response.status !== 200) {
+                    const data = await response.json();
+                    setErrorMessage(data.message || 'Failed to upload profile image');
                 }
                 return response.json();
             })
@@ -125,8 +127,7 @@ export default function AccountSettings() {
             })
             .catch(error => {
                 // Show error message
-                setSuccessMessage(error.message);
-
+                setErrorMessage(error.message || 'An error occurred while uploading the profile image');
                 // Clear error message after 3 seconds
                 setTimeout(() => {
                     setSuccessMessage("");
@@ -273,7 +274,7 @@ export default function AccountSettings() {
                                         src={profileImage}
                                         alt="Profile"
                                         size="md"
-                                        className="cursor-pointer border-2 border-gray-200 max-h-64"
+                                        className="cursor-pointer border-2 border-gray-200 rounded-full max-h-64 flex items-start"
                                         onClick={handleImageClick}
                                     />
                                     <div
@@ -299,7 +300,7 @@ export default function AccountSettings() {
                             </div>
                             <div className="flex justify-center">
                                 <Button
-                                    className="mt-4 bg-blue-500 hover:bg-blue-600 focus:bg-blue-600 active:bg-blue-700"
+                                    className="mt-4 bg-blue-400 text-white hover:bg-blue-600 focus:bg-blue-600 active:bg-blue-700 dark:text-white"
                                     disabled={!imageFile}
                                     onClick={handleProfileImageSave}>
                                     Save Changes
@@ -309,6 +310,13 @@ export default function AccountSettings() {
                     </Tabs.Panel>
                     <Tabs.Panel value="password" className="p-1 w-full block">
                         <CardBody className="p-4">
+
+                            {errorMessage && (
+                                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md">
+                                    {errorMessage}
+                                </div>
+                            )}
+
                             {successMessage && (
                                 <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-md">
                                     {successMessage}
@@ -395,8 +403,7 @@ export default function AccountSettings() {
                                 </div>
                                 <Button
                                     type="submit"
-                                    className="mt-4 bg-blue-500"
-                                >
+                                    className="mt-4 bg-blue-400 text-white hover:bg-blue-600 focus:bg-blue-600 active:bg-blue-700 dark:text-white">
                                     Change Password
                                 </Button>
                             </form>

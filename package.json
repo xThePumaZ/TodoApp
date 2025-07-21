@@ -38,6 +38,7 @@
         "@tailwindcss/postcss": "^4.1.11",
         "and": "^0.0.3",
         "date-fns": "^4.1.0",
+        "fs": "^0.0.1-security",
         "iconoir-react": "^7.11.0",
         "postcss-loader": "^8.1.1",
         "react-day-picker": "^9.8.0"

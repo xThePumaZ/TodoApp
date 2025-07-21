@@ -15,7 +15,39 @@ import {
     Xmark,
 } from "iconoir-react";
 
+
 function ProfileMenu() {
+    let profilePicture = "";
+    console.log(__dirname);
+    fetch('/api/v1/user/profile_picture', {
+        method: 'GET'
+    })
+        .then(async response => {
+            if (response.status !== 200) {
+                const data = await response.json();
+                // setErrorMessage(data.message || 'Failed to get profile image');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data);
+            profilePicture = data.profile_picture;
+            // Show success message
+        })
+        .catch(error => {
+            // Show error message
+            // setErrorMessage(error.message || 'An error occurred while uploading the profile image');
+            // Clear error message after 3 seconds
+            setTimeout(() => {
+                // setSuccessMessage("");
+            }, 3000);
+        });
+
+    if (profilePicture && profilePicture.length < 0) {
+        profilePicture = "../../images/default-profile.png";
+    }
+
+
     return (
         <Menu>
             <Menu.Trigger
@@ -89,7 +121,7 @@ export default function NavbarWithMegaMenu() {
                     type="small"
                     className="ml-2 mr-2 block py-1 font-semibold"
                 >
-                    Whats 2 ToDo
+                    WhatsToDo
                 </Typography>
                 <IconButton
                     size="sm"
