@@ -11,8 +11,8 @@
 {% endblock %}
 
 {% block body %}
-    <div class="min-h-screen bg-gray-100 dark:bg-gray-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="min-h-4/5 bg-gray-100 dark:bg-gray-700 max-w-screen-xl">
+        <div class="max-w-7xl mx-auto">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 sm:py-6 mb-4 sm:mb-8 gap-4">
                 <h1 class="text-xl sm:text-2xl font-bold text-left dark:text-white">Task Dashboard</h1>
                 <div {{ react_component('Dashboard/AddTaskForm',{ url: path('app_task_addtask'), priorities: priority }) }}></div>
@@ -62,79 +62,4 @@
             </div>
         </div>
     </div>
-    <div class="flex justify-center">
-        <div
-            class="fixed antialiased inset-0 bg-slate-950/50 flex justify-center items-center opacity-0 pointer-events-none transition-opacity duration-300 ease-out z-[9999]"
-            id="exampleModalForm" aria-hidden="true">
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl shadow-slate-950/5 w-[95vw] sm:w-[80vw] md:w-[60vw] lg:w-[40vw] scale-95 transition-transform duration-300 ease-out mx-2">
-                <div class="pt-3 sm:pt-4 px-3 sm:px-4 flex justify-between items-start">
-                    <div class="flex flex-col">
-                        <h1 class="text-lg sm:text-xl text-slate-800 font-bold dark:text-white">New Task</h1>
-                    </div>
-                    <button type="button" data-dismiss="modal" aria-label="Close"
-                            class="inline-grid place-items-center border align-middle select-none font-sans font-medium text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:pointer-events-none data-[shape=circular]:rounded-full text-sm min-w-[34px] min-h-[34px] rounded-full bg-transparent border-transparent text-slate-200-foreground hover:bg-slate-200/10 hover:border-slate-200/10 shadow-none hover:shadow-none outline-none ml-2">
-                        {{ ux_icon('mdi:close') }}
-                    </button>
-                </div>
-                <div class="p-3 sm:p-4">
-                    <div class="mb-3 sm:mb-4 mt-2 space-y-1.5">
-                        <label for="title"
-                               class="font-sans text-sm text-slate-800 dark:text-white font-bold mb-2">Title</label>
-                        <div class="relative w-full">
-                            <label>
-                                <input placeholder="Task Title..." type="text" id="title"
-                                       class="w-full aria-disabled:cursor-not-allowed outline-none focus:outline-none text-slate-800 dark:text-white dark:placeholder-white placeholder:text-slate-600/60 bg-transparent ring-transparent border border-slate-200 transition-all duration-300 ease-in disabled:opacity-50 disabled:pointer-events-none data-[error=true]:border-error data-[success=true]:border-success select-none data-[shape=pill]:rounded-full text-sm rounded-md py-2 px-2.5 ring shadow-sm data-[icon-placement=start]:ps-9 data-[icon-placement=end]:pe-9 hover:border-slate-800 hover:ring-slate-800/10 focus:border-slate-800 focus:ring-slate-800/10 peer"/>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="mb-3 sm:mb-4 mt-2 space-y-1.5">
-                        <label for="description"
-                               class="font-sans text-sm text-slate-800 dark:text-white text:text-black font-bold mb-2">Description</label>
-                        <div class="relative w-full">
-                            <textarea rows="6" placeholder="Task Description..." id="description"
-                                      class="peer block w-full resize-none rounded-md border border-slate-200 bg-transparent p-2.5 text-sm leading-none text-slate-800 outline-none ring ring-transparent transition-all duration-300 ease-in placeholder:text-slate-600/60 hover:border-slate-800 hover:ring-slate-800/10 focus:border-slate-800 focus:outline-none focus:ring-slate-800/10 disabled:pointer-events-none disabled:opacity-50 dark:text-white"></textarea>
-                        </div>
-                    </div>
-                    <div class="mb-3 sm:mb-4 mt-2 space-y-1.5">
-                        <label for="date"
-                               class="font-sans text-sm text-slate-800 font-bold mb-2 text:text-black dark:text-white">Due Date</label>
-                        <div class="relative w-full">
-                            <input placeholder="Due Date..." type="date" id="date"
-                                   class="w-full aria-disabled:cursor-not-allowed outline-none focus:outline-none text-slate-800 dark:text-white dark:placeholder-white placeholder:text-slate-600/60 bg-transparent ring-transparent border border-slate-200 transition-all duration-300 ease-in disabled:opacity-50 disabled:pointer-events-none data-[error=true]:border-error data-[success=true]:border-success select-none data-[shape=pill]:rounded-full text-sm rounded-md py-2 px-2.5 ring shadow-sm data-[icon-placement=start]:ps-9 data-[icon-placement=end]:pe-9 hover:border-slate-800 hover:ring-slate-800/10 focus:border-slate-800 focus:ring-slate-800/10 peer"/>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2 mb-3 sm:mb-4">
-                        <label class="flex items-center cursor-pointer relative" for="checkbox-with-label">
-                            <input type="checkbox" checked
-                                   class="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow-sm border border-slate-200 checked:bg-slate-800 checked:border-slate-800"
-                                   id="checkbox-with-label"/>
-                            <span
-                                class="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                <svg fill="none" width="18px" height="18px" stroke-width="2" color="currentColor"
-                                     viewBox="0 0 24 24"
-                                     xmlns="http://www.w3.org/2000/svg"><path d="M5 13L9 17L19 7"
-                                                                              stroke="currentColor" stroke-width="2"
-                                                                              stroke-linecap="round"
-                                                                              stroke-linejoin="round"></path></svg>
-                            </span>
-                        </label>
-                        <label class="cursor-pointer text-sm text-slate-600 antialiased" for="checkbox-with-label">Remember Me</label>
-                    </div>
-                </div>
-                <div class="px-3 sm:px-4 pb-3 sm:pb-4 flex flex-col justify-end gap-2">
-                    <button type="button"
-                            class="inline-flex items-center justify-center border align-middle select-none font-sans font-medium text-center transition-all duration-300 ease-in disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed data-[shape=pill]:rounded-full data-[width=full]:w-full focus:shadow-none text-sm rounded-md py-2.5 px-4 shadow-sm hover:shadow-md bg-slate-800 border-slate-800 text-slate-50 hover:bg-slate-700 hover:border-slate-700">
-                        Sign In
-                    </button>
-                    <small
-                        class="font-sans text-xs sm:text-sm mb-2 mt-2 sm:mt-3 flex items-center justify-center gap-1 text-slate-600">Don't
-                        have an account? <a href="#" onclick="event.preventDefault();"
-                                            class="font-sans text-xs sm:text-sm text-slate-600 font-semibold">Sign up</a>
-                    </small>
-                </div>
-            </div>
-        </div>
-    </div>
-    {{ dump() }}
 {% endblock %}

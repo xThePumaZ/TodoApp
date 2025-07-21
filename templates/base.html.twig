@@ -13,26 +13,10 @@
     {% endblock %}
 </head>
 <body class="bg-gray-100" data-turbo-suppress-warning="true">
-<div {{ react_component('Navbar') }}></div>
-{#<nav class="bg-gray-100 dark:bg-gray-700 shadow mb-8">#}
-{#    <div class="max-w-7xl mx-auto px-4">#}
-{#        <div class="flex justify-between items-center h-16">#}
-{#            <!-- Logo links -->#}
-{#            <div class="flex-shrink-0">#}
-{#                <img class="h-10 w-auto inline dark:text-white" src="{{ asset('images/logo.svg') }}" alt="Logo">#}
-{#            </div>#}
-{#            <!-- User Area rechts -->#}
-{#            <div class="flex items-center space-x-4">#}
-{#                <span class="text-gray-600 dark:text-white">{{ app.user ? app.user.username : 'Gast' }}</span>#}
-{#                <img class="h-10 w-10 rounded-full border-2 border-gray-300 object-cover"#}
-{#                     src="{{ app.user and app.user.profilePicture ? asset(app.user.profilePicture) : asset('images/default-avatar.png') }}"#}
-{#                     alt="Profilbild">#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
-{#</nav>#}
-
-<main>
+    {% block navbar %}
+        <div {{ react_component('Navbar') }}></div>
+    {% endblock %}
+<main class="mx-auto w-full max-w-screen-xl">
     {% block body %}{% endblock %}
 </main>
 </body>

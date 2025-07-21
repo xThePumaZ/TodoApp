@@ -1,6 +1,7 @@
 import {draggable, dropTargetForElements} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('Dashboard JS loaded');
     const list = document.querySelectorAll('.task-list');
 
     list.forEach(list => {

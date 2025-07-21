@@ -2,6 +2,17 @@
 
 {% block title %}Login{% endblock %}
 
+{% block stylesheets %}
+    {{ encore_entry_link_tags('app') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('app') }}
+{% endblock %}
+
+{% block navbar %}
+{% endblock %}
+
 {% block body %}
     <div class="min-h-screen flex items-center justify-center bg-gray-100">
         <div class="w-full max-w-md bg-white p-8 rounded shadow">
@@ -19,7 +30,7 @@
                 </div>
             {% endif %}
 
-            <form method="post" class="space-y-4">
+            <form method="post" action="{{ path('app_login') }}" class="space-y-4">
                 <div>
                     <label for="username" class="block text-sm font-medium text-gray-700">Benutzername</label>
                     <input type="text" value="{{ last_username }}" name="_username" id="username"

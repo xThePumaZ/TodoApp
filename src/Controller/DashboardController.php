@@ -9,13 +9,14 @@ use App\Config\Status;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 class DashboardController extends AbstractController
 {
     #[Route('/dashboard', name: 'app_dashboard')]
-    public function index(): Response
+    public function index(AuthorizationCheckerInterface $authorizationChecker): Response
     {
-        if (!$this->getUser()) {
+        if (!$authorizationChecker->isGranted('ROLE_USER')) {
             return $this->redirectToRoute('app_login');
         }
 
