@@ -44,15 +44,25 @@ class UserApiController extends AbstractController
     {
         if ($this->getUser()) {
             $user = $entityManager->getRepository(User::class)->find($this->getUser()->getId());
-            $profilePicture = $user->getProfilePicture()->getContent();
+            $profilePicture = stream_get_contents($user->getProfilePicture());
 
-            return $this->json(
-                [
-                    'message' => 'Profile picture loaded successfully.',
-                    'profilePicture' => 'data:image/jpeg;base64' . $profilePicture,
-                ],
-                Response::HTTP_OK
-            );
+            if (!empty($profilePicture)) {
+                return $this->json(
+                    [
+                        'message' => 'Profile picture loaded successfully.',
+                        'profilePicture' => 'data:image/jpeg;base64, ' . $profilePicture,
+                    ],
+                    Response::HTTP_OK
+                );
+            } else {
+                return $this->json(
+                    [
+                        'message' => 'No profile picture found, using default image.',
+                        'profilePicture' => 'data:image/jpeg;base64, ' . base64_encode(file_get_contents('build/images/default-avatar.png')),
+                    ],
+                    Response::HTTP_OK
+                );
+            }
         }
         return $this->json(
             [

@@ -25,9 +25,44 @@ interface ErrorState {
     confirmPassword: string | null;
 }
 
+
+function useUserAvatar() {
+    const [profilePicture, setProfilePicture] = React.useState("");
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        setIsLoading(true);
+        fetch('/api/v1/user/profile_picture', {
+            method: 'GET'
+        })
+            .then(async response => {
+                if (response.status !== 200) {
+                    const data = await response.json();
+                    console.error("Failed to get profile image:", data.message);
+                    throw new Error(data.message || 'Failed to get profile image');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.profilePicture) {
+                    setProfilePicture(data.profilePicture);
+                }
+                setIsLoading(false);
+            })
+    }, []);
+
+    return { profilePicture, isLoading, setProfilePicture };
+}
+
 export default function AccountSettings() {
-    // Get the tab from URL query parameter
     const [activeTab, setActiveTab] = React.useState<string>("profile");
+    const { profilePicture, isLoading, setProfilePicture} = useUserAvatar();
+
+    const [imageFile, setImageFile] = React.useState<File | null>(null);
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+    const [successMessage, setSuccessMessage] = React.useState<string>("");
+    const [errorMessage, setErrorMessage] = React.useState<string>("");
 
     React.useEffect(() => {
         // Check if URL has a tab parameter
@@ -40,12 +75,7 @@ export default function AccountSettings() {
         }
     }, []);
 
-    // State for profile information
-    const [profileImage, setProfileImage] = React.useState<string>(
-        "https://raw.githubusercontent.com/creativetimofficial/public-assets/master/ct-assets/team-4.jpg"
-    );
-    const [imageFile, setImageFile] = React.useState<File | null>(null);
-    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
 
     // State for password change
     const [passwordData, setPasswordData] = React.useState<PasswordData>({
@@ -60,8 +90,6 @@ export default function AccountSettings() {
         newPassword: null,
         confirmPassword: null,
     });
-    const [successMessage, setSuccessMessage] = React.useState<string>("");
-    const [errorMessage, setErrorMessage] = React.useState<string>("");
 
     // Handle profile image change
     const handleImageClick = (): void => {
@@ -79,7 +107,7 @@ export default function AccountSettings() {
             const reader = new FileReader();
             reader.onload = (event: ProgressEvent<FileReader>): void => {
                 if (event.target && event.target.result) {
-                    setProfileImage(event.target.result as string);
+                    setProfilePicture(event.target.result as string);
                 }
             };
             reader.readAsDataURL(file);
@@ -116,6 +144,7 @@ export default function AccountSettings() {
             .then(data => {
                 // Show success message
                 setSuccessMessage(data.message || "Profile picture updated successfully!");
+
 
                 // Reset the image file state since it's been uploaded
                 setImageFile(null);
@@ -238,15 +267,13 @@ export default function AccountSettings() {
         <Card className="w-full shadow-none">
             <CardHeader
                 color="transparent"
-                floated={false}
-                shadow={false}
                 className="m-0 p-4 border-b border-gray-200">
                 <Tabs defaultValue="profile" value={activeTab} orientation="horizontal"
                       className="relative flex shrink-0 flex-col data-[orientation=horizontal]:flex-col data-[orientation=vertical]:flex-col rounded-md p-1 bg-surface-light dark:bg-surface w-full">
                     <Tabs.List className="relative z-0 bg-gray-100 w-full">
                         <Tabs.Trigger
                             value="profile"
-                            className="inline-flex relative z-[2] py-1.5 px-3 items-center justify-center align-middle text-black dark:text-white select-none font-sans font-medium text-center text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200"
+                            className="inline-flex relative z-[2] py-1.5 px-3 items-center justify-center align-middle text-black dark:text-white select-none font-sans font-medium text-center text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200 cursor-pointer"
                             onClick={() => setActiveTab("profile")}
                         >
                             <ProfileCircle className="mr-2 h-4 w-4"/>
@@ -254,7 +281,7 @@ export default function AccountSettings() {
                         </Tabs.Trigger>
                         <Tabs.Trigger
                             value="password"
-                            className="inline-flex relative z-[2] py-1.5 px-3 items-center justify-center align-middle text-black dark:text-white select-none font-sans font-medium text-center text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200"
+                            className="inline-flex relative z-[2] py-1.5 px-3 items-center justify-center align-middle text-black dark:text-white select-none font-sans font-medium text-center text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200 cursor-pointer"
                             onClick={() => setActiveTab("password")}
                         >
                             <Key className="mr-2 h-4 w-4"/>
@@ -270,13 +297,14 @@ export default function AccountSettings() {
                             )}
                             <div className="flex flex-col items-center mb-6">
                                 <div className="relative mb-4 group">
-                                    <Avatar
-                                        src={profileImage}
-                                        alt="Profile"
-                                        size="md"
-                                        className="cursor-pointer border-2 border-gray-200 rounded-full max-h-64 flex items-start"
-                                        onClick={handleImageClick}
-                                    />
+                                    {!isLoading && (
+                                        <Avatar
+                                            src={profilePicture}
+                                            alt="Profile"
+                                            size="md"
+                                            className="cursor-pointer border-2 border-gray-200 rounded-full max-h-64 flex items-start"
+                                            onClick={handleImageClick}/>
+                                    )}
                                     <div
                                         className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                                         onClick={handleImageClick}
