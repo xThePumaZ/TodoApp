@@ -264,16 +264,16 @@ export default function AccountSettings() {
     };
 
     return (
-        <Card className="w-full shadow-none">
+        <Card className="w-full shadow-none bg-gray-100 dark:bg-gray-500">
             <CardHeader
                 color="transparent"
-                className="m-0 p-4 border-b border-gray-200">
+                className="m-0 p-4 border-b border-gray-300">
                 <Tabs defaultValue="profile" value={activeTab} orientation="horizontal"
                       className="relative flex shrink-0 flex-col data-[orientation=horizontal]:flex-col data-[orientation=vertical]:flex-col rounded-md p-1 bg-surface-light dark:bg-surface w-full">
-                    <Tabs.List className="relative z-0 bg-gray-100 w-full">
+                        <Tabs.List className="relative z-0 bg-gray-300 w-full">
                         <Tabs.Trigger
                             value="profile"
-                            className="inline-flex relative z-[2] py-1.5 px-3 items-center justify-center align-middle text-black dark:text-white select-none font-sans font-medium text-center text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200 cursor-pointer"
+                            className="inline-flex relative z-[2] py-1.5 px-3 items-center justify-center align-middle text-black dark:text-black select-none font-sans font-medium text-center text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200 cursor-pointer"
                             onClick={() => setActiveTab("profile")}
                         >
                             <ProfileCircle className="mr-2 h-4 w-4"/>
@@ -281,7 +281,7 @@ export default function AccountSettings() {
                         </Tabs.Trigger>
                         <Tabs.Trigger
                             value="password"
-                            className="inline-flex relative z-[2] py-1.5 px-3 items-center justify-center align-middle text-black dark:text-white select-none font-sans font-medium text-center text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200 cursor-pointer"
+                            className="inline-flex relative z-[2] py-1.5 px-3 items-center justify-center align-middle text-black dark:text-black select-none font-sans font-medium text-center text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200 cursor-pointer"
                             onClick={() => setActiveTab("password")}
                         >
                             <Key className="mr-2 h-4 w-4"/>
@@ -319,10 +319,10 @@ export default function AccountSettings() {
                                         onChange={handleImageChange}
                                     />
                                 </div>
-                                <Typography variant="h6" className="mb-1">
+                                <Typography variant="h6" className="mb-1 text-black dark:text-gray-50">
                                     Change Profile Picture
                                 </Typography>
-                                <Typography className="text-gray-600 text-sm">
+                                <Typography className="text-black dark:text-gray-100 text-sm">
                                     Click on the image to upload a new profile picture
                                 </Typography>
                             </div>
@@ -357,7 +357,7 @@ export default function AccountSettings() {
                                         htmlFor="currentPassword"
                                         type="small"
                                         color="default"
-                                        className="font-semibold text-sm"
+                                        className="font-semibold text-sm text-black dark:text-gray-50"
                                     >
                                         Current Password
                                     </Typography>
@@ -365,7 +365,7 @@ export default function AccountSettings() {
                                         id="currentPassword"
                                         type="password"
                                         placeholder="Enter your current password"
-                                        className={`text-sm ${
+                                        className={`text-sm  text-black dark:text-gray-50 ${
                                             errors.currentPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.currentPassword}
@@ -383,7 +383,7 @@ export default function AccountSettings() {
                                         htmlFor="newPassword"
                                         type="small"
                                         color="default"
-                                        className="font-semibold text-sm"
+                                        className="font-semibold text-sm text-black dark:text-gray-50"
                                     >
                                         New Password
                                     </Typography>
@@ -391,7 +391,7 @@ export default function AccountSettings() {
                                         id="newPassword"
                                         type="password"
                                         placeholder="Enter your new password"
-                                        className={`text-sm ${
+                                        className={`text-sm text-black dark:text-gray-50 ${
                                             errors.newPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.newPassword}
@@ -409,7 +409,7 @@ export default function AccountSettings() {
                                         htmlFor="confirmPassword"
                                         type="small"
                                         color="default"
-                                        className="font-semibold text-sm"
+                                        className="font-semibold text-sm text-black dark:text-gray-50"
                                     >
                                         Confirm New Password
                                     </Typography>
@@ -417,7 +417,7 @@ export default function AccountSettings() {
                                         id="confirmPassword"
                                         type="password"
                                         placeholder="Confirm your new password"
-                                        className={`text-sm ${
+                                        className={`text-sm text-black dark:text-gray-50 ${
                                             errors.confirmPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.confirmPassword}

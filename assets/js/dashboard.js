@@ -1,6 +1,8 @@
 import {draggable, dropTargetForElements} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 
-document.addEventListener('DOMContentLoaded', function () {
+window.addEventListener('load', (event) =>  {
+
+    console.log("Dashboard loaded");
     const list = document.querySelectorAll('.task-list');
 
     list.forEach(list => {
@@ -17,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
             element: list,
             onDrop({source}) {
                 if (list.getAttribute('data-status') !== source.element.getAttribute('data-status')) {
-                    fetch(`/task/update_status`, {
+                    fetch(`/api/v1/task/update_status`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

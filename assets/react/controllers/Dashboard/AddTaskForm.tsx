@@ -8,13 +8,34 @@ import {format} from "date-fns";
 import * as React from "react";
 import {StrictMode} from 'react';
 
-
 import {DialogOpenButton} from "./AddTaskButton";
 
-export default function (props) {
+// Define interfaces for TypeScript
+interface AddTaskFormProps {
+    url: string;
+    priorities: Record<string, string>;
+}
+
+interface FormData {
+    title: string;
+    description: string;
+    priority: "low" | "medium" | "high";
+    due_date: Date | null;
+}
+
+interface FormErrors {
+    title?: string | null;
+    description?: string | null;
+    priority?: string | null;
+    due_date?: string | null;
+}
+
+type PriorityValue = "low" | "medium" | "high";
+
+export default function AddTaskForm(props: AddTaskFormProps) {
 
     // Form state
-    const [formData, setFormData] = React.useState({
+    const [formData, setFormData] = React.useState<FormData>({
         title: "",
         description: "",
         priority: "low", // Default priority
@@ -22,10 +43,10 @@ export default function (props) {
     });
 
     // Validation state
-    const [errors, setErrors] = React.useState({});
+    const [errors, setErrors] = React.useState<FormErrors>({});
 
     // Handle input changes
-    const handleInputChange = (e) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const {id, value} = e.target;
         setFormData({
             ...formData,
@@ -33,7 +54,7 @@ export default function (props) {
         });
 
         // Clear error when user types
-        if (errors[id]) {
+        if (errors[id as keyof FormErrors]) {
             setErrors({
                 ...errors,
                 [id]: null
@@ -42,24 +63,24 @@ export default function (props) {
     };
 
     // Handle priority change
-    const handlePriorityChange = (value) => {
+    const handlePriorityChange = (value: string) => {
         setFormData({
             ...formData,
-            priority: value
+            priority: value as PriorityValue
         });
     };
 
     // Handle date change
-    const handleDateChange = (selectedDate) => {
+    const handleDateChange = (selectedDate: Date | undefined) => {
         setFormData({
             ...formData,
-            due_date: selectedDate
+            due_date: selectedDate || null
         });
     };
 
     // Form validation
-    const validateForm = () => {
-        const newErrors = {};
+    const validateForm = (): boolean => {
+        const newErrors: FormErrors = {};
 
         if (!formData.title.trim()) {
             newErrors.title = "Title is required";
@@ -70,7 +91,7 @@ export default function (props) {
     };
 
     // Form submission
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (!validateForm()) {
@@ -78,7 +99,7 @@ export default function (props) {
         }
 
         // Map priority values to match the backend enum
-        const priorityMap = {
+        const priorityMap: Record<PriorityValue, string> = {
             "high": "High",
             "medium": "Medium",
             "low": "Low"
@@ -117,7 +138,7 @@ export default function (props) {
                     setFormData({
                         title: "",
                         description: "",
-                        priority: "high",
+                        priority: "low",
                         due_date: null
                     });
 
@@ -210,10 +231,10 @@ export default function (props) {
                                    onValueChange={handlePriorityChange} orientation="vertical">
                                 {Object.entries(props.priorities).map(([priorityValue, colorClass]) => {
                                     // Map priority values to radio button values
-                                    const radioValue = priorityValue.toLowerCase();
+                                    const radioValue = priorityValue.toLowerCase() as PriorityValue;
                                     const priorityId = radioValue;
 
-                                    const colorClassMap = {
+                                    const colorClassMap: Record<PriorityValue, string> = {
                                         high: "data-[checked=true]:bg-red-500",
                                         medium: "data-[checked=true]:bg-yellow-500",
                                         low: "data-[checked=true]:bg-green-500"
@@ -257,7 +278,7 @@ export default function (props) {
                                             name="due_date"
                                             readOnly
                                             onChange={() => null}
-                                            onClick={e => e.preventDefault()}
+                                            onClick={(e: React.MouseEvent) => e.preventDefault()}
                                             placeholder="Due Date"
                                             value={formData.due_date ? format(formData.due_date, "PPP") : ""}
                                             className="text-sm"

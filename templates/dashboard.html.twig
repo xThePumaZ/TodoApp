@@ -17,49 +17,7 @@
                 <h1 class="text-xl sm:text-2xl font-bold text-left dark:text-white">Task Dashboard</h1>
                 <div {{ react_component('Dashboard/AddTaskForm',{ url: path('app_task_addtask'), priorities: priority }) }}></div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {% for status, tasks in tasksByStatus %}
-                    <div
-                        class="bg-white dark:bg-gray-500 rounded shadow p-4 sm:p-6 task-list mb-6 border border-gray-200 dark:border-gray-700"
-                        data-status="{{ status }}">
-                        <h2 class="text-lg font-bold mb-4 text-gray-800 dark:text-white">{{ status|title }}</h2>
-                        <div id="task-list-{{ status }}" class="space-y-3 sm:space-y-4">
-                            {% for task in tasks %}
-                                <div
-                                    class="relative flex flex-col bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm border border-slate-200 rounded-lg w-full task-item"
-                                    data-task-id="{{ task.id }}" data-status="{{ task.status.name }}">
-                                    <div
-                                        class="mx-2 sm:mx-3 mb-0 border-b border-slate-200 pt-2 sm:pt-3 pb-2 px-1 flex items-center justify-between">
-                                        <span class="text-sm font-medium text-slate-600 dark:text-white truncate mr-2">
-                                            {{ task.title }}
-                                        </span>
-                                        <form method="post" action="{{ path('app_task_remove', {id: task.id}) }}"
-                                              onsubmit="return confirm('Wirklich löschen?');">
-                                            <button type="submit" class="ml-2 text-gray-400 hover:text-red-600 flex-shrink-0">
-                                                {{ ux_icon('mdi:trash', { class: 'w-5 h-5' }) }}
-                                            </button>
-                                        </form>
-                                    </div>
-                                    <div class="p-3 sm:p-4">
-                                        <p class="text-sm text-slate-600 leading-normal font-light dark:text-white">
-                                            {{ task.description|default('Keine Beschreibung') }}
-                                        </p>
-                                        {% if task.dueDate %}
-                                            <span
-                                                class="text-red-500 dark:text-red-250 text-xs sm:text-sm block mt-2">Fällig: {{ task.dueDate|date('Y-m-d') }}</span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="mx-2 sm:mx-3 border-t border-slate-200 pb-2 sm:pb-3 pt-2 px-1">
-                                        <span class="text-xs sm:text-sm text-slate-600 font-medium dark:text-white">
-                                            Zuletzt aktualisiert: {{ task.updatedAt ? task.updatedAt|date('Y-m-d H:i') : task.createdAt|date('Y-m-d H:i') }}
-                                        </span>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
+            <div {{ react_component('Dashboard/TaskBoard', { tasksByStatus : tasksByStatus }) }}></div>
         </div>
     </div>
 {% endblock %}

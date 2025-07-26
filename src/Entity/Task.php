@@ -63,7 +63,7 @@ class Task
         return $this;
     }
 
-    public function getListId(): Lists
+    public function getListId(): ?Lists
     {
         return $this->list_id;
     }

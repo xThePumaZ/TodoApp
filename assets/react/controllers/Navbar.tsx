@@ -52,7 +52,7 @@ function ProfileMenu() {
                 src={profilePicture}
                 alt="profile-picture"
                 size="sm"
-                className="border border-primary p-0.5 lg:ml-auto max-h-16"
+                className="border border-primary p-0.5 lg:ml-auto max-h-16 dark:border-white"
             />
             <Menu.Content
                 className="min-w-40 rounded-lg space-y-0.5 border border-surface bg-background p-1 text-sm text-foreground shadow-xl shadow-black/[0.025] outline-none bg-white cursor-pointer">
@@ -75,35 +75,6 @@ function ProfileMenu() {
     );
 }
 
-const MenuItem = React.forwardRef<
-    typeof Menu.Item,
-    {
-        title: string;
-        description: string;
-        icon?: React.ElementType;
-    }
->(({title, description, icon: Icon, ...rest}, ref) => {
-    return (
-        <List.Item as="a" href="#" className="p-1.5" {...rest}>
-            {Icon && (
-                <List.ItemStart>
-                    <div className="flex items-center justify-center rounded-[5px] bg-surface-light p-2">
-                        <Icon className="h-6 w-6 text-black dark:text-white"/>
-                    </div>
-                </List.ItemStart>
-            )}
-            <div className="leading-none">
-                <Typography color="default" className="mb-0.5 text-sm font-semibold">
-                    {title}
-                </Typography>
-                <Typography type="small" className="text-xs text-foreground">
-                    {description}
-                </Typography>
-            </div>
-        </List.Item>
-    );
-});
-
 export default function NavbarWithMegaMenu() {
     const [openNav, setOpenNav] = React.useState(false);
     React.useEffect(() => {
@@ -114,22 +85,22 @@ export default function NavbarWithMegaMenu() {
     }, []);
 
     return (
-        <Navbar className="mx-auto w-full max-w-screen-xl">
+        <Navbar className="mx-auto w-full max-w-screen-xl bg-gray-200 dark:bg-gray-500">
             <div className="flex items-center">
                 <Typography
                     as="a"
                     href="/"
                     type="small"
-                    className="ml-2 mr-2 block py-1 font-semibold"
+                    className="ml-2 mr-2 block py-1 font-semibold dark:text-white "
                 >
                     WhatsToDo
                 </Typography>
                 <IconButton
-                    size="sm"
+                    size="lg"
                     variant="ghost"
                     color="secondary"
                     onClick={() => setOpenNav(!openNav)}
-                    className="ml-auto mr-2 grid lg:hidden"
+                    className="ml-auto mr-2 grid lg:hidden dark:border-white"
                 >
                     {openNav ? (
                         <Xmark className="h-4 w-4"/>
