@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -40,6 +41,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Task>
      */
+    #[MaxDepth(1)]
     #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'user_id')]
     private Collection $tasks;
 
@@ -162,9 +164,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getProfilePicture()
+    public function getProfilePicture(): false|string|null
     {
-        return $this->profilePicture;
+        return is_resource($this->profilePicture) ? stream_get_contents($this->profilePicture) : $this->profilePicture;
     }
 
     public function setProfilePicture($profilePicture): static

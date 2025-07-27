@@ -1,6 +1,18 @@
 import * as React from "react";
+import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 
 export default function TaskItem({ task, onDelete }) {
+    const taskItemRef = React.useRef(null);
+
+    React.useEffect(() => {
+        const element = taskItemRef.current;
+        if (element) {
+            return draggable({
+                element: element,
+            });
+        }
+    }, []);
+
     const handleDelete = (e) => {
         e.preventDefault();
         if (window.confirm('Wirklich löschen?')) {
@@ -46,6 +58,7 @@ export default function TaskItem({ task, onDelete }) {
 
     return (
         <div
+            ref={taskItemRef}
             className="relative flex flex-col bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm border border-slate-200 rounded-lg w-full task-item"
             data-task-id={task.id}
             data-status={task.status?.name || task.status}

@@ -17,7 +17,7 @@
                 <h1 class="text-xl sm:text-2xl font-bold text-left dark:text-white">Task Dashboard</h1>
                 <div {{ react_component('Dashboard/AddTaskForm',{ url: path('app_task_addtask'), priorities: priority }) }}></div>
             </div>
-            <div {{ react_component('Dashboard/TaskBoard', { tasksByStatus : tasksByStatus }) }}></div>
+            <div {{ react_component('Dashboard/TaskBoard') }}></div>
         </div>
     </div>
 {% endblock %}

@@ -1,0 +1,101 @@
+<?php
+
+namespace App\Controller\Model;
+
+class Task
+{
+    private string $description;
+    private string $status;
+    private string $priority;
+    private \DateTimeImmutable $createdAt;
+    private \DateTime $updatedAt;
+
+    private int $id;
+    private string $title;
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
+    }
+
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    public function setTitle(string $title): void
+    {
+        $this->title = $title;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(string $description): void
+    {
+        $this->description = $description;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): void
+    {
+        $this->status = $status;
+    }
+
+    public function getPriority(): string
+    {
+        return $this->priority;
+    }
+
+    public function setPriority(string $priority): void
+    {
+        $this->priority = $priority;
+    }
+
+    public function getCreatedAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): void
+    {
+        $this->createdAt = $createdAt;
+    }
+
+    public function getUpdatedAt(): \DateTime
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(\DateTime $updatedAt): void
+    {
+        $this->updatedAt = $updatedAt;
+    }
+
+    public function __construct(int $id, string $title, string $description, string $status, string $priority, \DateTimeImmutable $createdAt, \DateTime $updatedAt)
+    {
+        $this->id = $id;
+        $this->title = $title;
+        $this->description = $description;
+        $this->status = $status;
+        $this->priority = $priority;
+        $this->createdAt = $createdAt;
+        $this->updatedAt = $updatedAt;
+    }
+
+
+
+    // Getters and setters for each property can be added here
+
+}

@@ -1,13 +1,50 @@
 import * as React from "react";
 import TaskItem from "./TaskItem";
+import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 
 export default function TaskColumn({ status, tasks }) {
+    const columnRef = React.useRef(null);
+
+    React.useEffect(() => {
+        const element = columnRef.current;
+        if (element) {
+            return dropTargetForElements({
+                element: element,
+                onDrop({source}) {
+                    if (status !== source.element.getAttribute('data-status')) {
+                        fetch(`/api/v1/task/update_status`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                task_id: source.element.getAttribute('data-task-id'),
+                                status: status,
+                            }),
+                        }).then(r => {
+                            if (r.status === 200) {
+                                // Reload the page to reflect changes
+                                window.location.reload();
+                            } else {
+                                throw new Error('Network response was not ok');
+                            }
+                        }).catch(error => {
+                            console.error('Error updating task status:', error);
+                            alert('Error updating task status: ' + error.message);
+                        });
+                    }
+                },
+            });
+        }
+    }, [status]);
+
     const capitalizeFirst = (str) => {
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     };
 
     return (
         <div
+            ref={columnRef}
             className="bg-white dark:bg-gray-500 rounded shadow p-4 sm:p-6 task-list mb-6 border border-gray-200 dark:border-gray-700"
             data-status={status}
         >
