@@ -6,26 +6,26 @@ namespace App\Controller\Api\v1;
 
 use App\Config\Priority;
 use App\Config\Status;
+use App\Controller\BaseController;
 use App\Entity\Task;
+use App\Form\AddTaskFormType;
+use App\Model\Task as TaskModel;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Serializer\Context\Normalizer\ObjectNormalizerContextBuilder;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
-use App\Controller\Model\Task as TaskModel;
-
-class TaskApiController extends AbstractController
+class TaskApiController extends BaseController
 {
 
     #[Route('/api/v1/task/getTasksStatus', name: 'app_task_get_status', methods: ['GET'])]
-    public function getTasksStatus() : JsonResponse|Response
+    public function getTasksStatus(): JsonResponse|Response
     {
         $user = $this->getUser();
         if (!$user) {
@@ -48,12 +48,13 @@ class TaskApiController extends AbstractController
         );
 
     }
+
     #[Route('/api/v1/task/getAllTasks', name: 'app_task_get', methods: ['GET'])]
     public function getTasks(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse|Response
     {
         $taskReturn = [];
-
         $user = $this->getUser();
+
         if (!$user) {
             return new Response('Unauthorized', Response::HTTP_UNAUTHORIZED);
         }
@@ -61,31 +62,17 @@ class TaskApiController extends AbstractController
         $tasks = $entityManager->getRepository(Task::class)->findBy(['user_id' => $user->getId(), 'status' => [Status::Open, Status::InProgress]]);
 
         foreach ($tasks as $task) {
-
-            $taskReturn[] = new TaskModel(
-                $task->getId(),
-                $task->getTitle(),
-                $task->getDescription(),
-                $task->getStatus()->name,
-                $task->getPriority()->name,
-                $task->getCreatedAt(),
-                $task->getUpdatedAt());
+            $taskReturn[] = $this->createModelFromEntity($task);
         }
 
-        return $this->json(
-            [
-                'data' => $serializer->serialize($taskReturn, 'json'),
-                'message' => 'Tasks retrieved successfully',
-            ],
-            Response::HTTP_OK
-        );
+        return BaseController::createResponse('Tasks retrieved successfully', Response::HTTP_OK, $taskReturn);
     }
 
     /**
      * @throws ExceptionInterface
      */
     #[Route('/api/v1/task/getTasksWithStatus', name: 'app_task_get_task_with_status', methods: ['GET'])]
-    function getTaskWithStatus(Request $request, EntityManagerInterface $entityManager, SerializerInterface $serializer): Response
+    function getTaskWithStatus(EntityManagerInterface $entityManager, SerializerInterface $serializer): Response
     {
 
         $user = $this->getUser();
@@ -101,29 +88,16 @@ class TaskApiController extends AbstractController
         foreach ($statusList as $status) {
             foreach ($tasks as $task) {
                 if ($task->getStatus()->value === $status->value) {
-                    $tasksByStatus[$task->getStatus()->name][] = new TaskModel(
-                        $task->getId(),
-                        $task->getTitle(),
-                        $task->getDescription(),
-                        $task->getStatus()->name,
-                        $task->getPriority()->name,
-                        $task->getCreatedAt(),
-                        $task->getUpdatedAt());;
+                    $tasksByStatus[$task->getStatus()->name][] = $this->createModelFromEntity($task);
                 }
             }
-            if (!array_key_exists($status->name,$tasksByStatus)) {
+            if (!array_key_exists($status->name, $tasksByStatus)) {
                 $tasksByStatus[$status->name] = [];
             }
         }
-
-        return $this->json(
-            [
-                'data' => $serializer->serialize($tasksByStatus, 'json'),
-                'message' => 'Tasks retrieved successfully',
-            ],
-            Response::HTTP_OK
-        );
+        return BaseController::createResponse('Tasks retrieved successfully', Response::HTTP_OK, $serializer->serialize($tasksByStatus,'json'));
     }
+
     #[Route('/api/v1/task/delete', name: 'app_task_remove', methods: ['POST'])]
     public function deleteTask(EntityManagerInterface $entityManager): Response
     {
@@ -138,8 +112,11 @@ class TaskApiController extends AbstractController
         return $this->redirectToRoute('app_dashboard');
     }
 
+    /**
+     * @throws ExceptionInterface
+     */
     #[Route('/api/v1/task/update_status', name: 'app_task_status_update', methods: ['POST'])]
-    public function updateStatus(EntityManagerInterface $entityManager): Response
+    public function updateStatus(EntityManagerInterface $entityManager, SerializerInterface $serializer): Response
     {
         $request = Request::createFromGlobals();
         $requestContent = json_decode($request->getContent());
@@ -148,41 +125,27 @@ class TaskApiController extends AbstractController
             return new Response('Invalid request data', Response::HTTP_BAD_REQUEST);
         }
 
-        $product = $entityManager->getRepository(Task::class)->find($requestContent->task_id);
+        $task = $entityManager->getRepository(Task::class)->find($requestContent->task_id);
         $status = Status::tryFrom($this->mapStatusToInt($requestContent->status));
 
-        if (!$product) {
+        if (!$task) {
             throw $this->createNotFoundException('Task not found');
         }
 
-        if ($product->getStatus() !== $status) {
+        if ($task->getStatus() !== $status) {
             if ($status === Status::Done) {
-                $product->setCompletedAt(new DateTimeImmutable());
+                $task->setCompletedAt(new DateTimeImmutable());
             }
 
-            $product->setStatus($status);
-            $product->setUpdatedAt(new DateTime());
+            $task->setStatus($status);
+            $task->setUpdatedAt(new DateTime());
 
             $entityManager->flush();
 
-            return $this->json(
-                array(
-                    'data' => $product,
-                    'message' => 'Task status updated successfully',
-                ),
-                Response::HTTP_OK
-            );
+            return BaseController::createResponse('Task updated successfully');
         }
-        // If the status is the same, return a 304 Not Modified response
-        $this->json(
-            array(
-                'message' => 'Task status is already ' . $status->name,
-                'data' => $product,
-            ),
-            Response::HTTP_NOT_MODIFIED
-        );
 
-        return new Response('Task status is already ' . $status->name, Response::HTTP_NOT_MODIFIED);
+        return BaseController::createResponse('Task status is already ' . $status->name, Response::HTTP_NOT_MODIFIED);
     }
 
     #[Route('/api/v1/task/addTask', name: 'app_task_addtask', methods: ['POST'])]
@@ -190,13 +153,32 @@ class TaskApiController extends AbstractController
     {
         try {
             $task = new Task();
-            $title = $request->request->get('title');
+//            $title = $request->request->get('title');
+//
+//            $description = $request->request->get('description');
+//            $priority = Priority::tryFrom($request->request->get('priority'));
+//            $dueDateString = $request->request->get('due_date');
 
-            $description = $request->request->get('description');
-            $priority = Priority::tryFrom($request->request->get('priority'));
-            $dueDateString = $request->request->get('due_date');
+            $addTaskForm = $this->createForm(AddTaskFormType::class, $task)->handleRequest($request);
+            $addTaskForm->submit($request->request->all());
 
-            if (empty($title)) {
+            if ($addTaskForm->isSubmitted() && $addTaskForm->isValid()) {
+                $task->setTitle($addTaskForm->get('title')->getData());
+                $task->setDescription($addTaskForm->get('description')->getData());
+                $task->setPriority($addTaskForm->get('priority')->getData());
+                $task->setDueDate(new DateTime($addTaskForm->get('dueDate')->getData()));
+
+                $task->setCreatedAt(new DateTimeImmutable());
+                $task->setUpdatedAt(new DateTime());
+                $task->setStatus(Status::Open);
+
+
+
+                $entityManager->persist($task);
+                $entityManager->flush();
+            }
+
+/*            if (empty($title)) {
                 return new Response(null, Response::HTTP_BAD_REQUEST);
             }
 
@@ -210,9 +192,9 @@ class TaskApiController extends AbstractController
 
             if ($dueDateString) {
                 try {
-                    $dueDate = new \DateTime($dueDateString);
+                    $dueDate = new DateTime($dueDateString);
                     $task->setDueDate($dueDate);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     return new Response('Invalid date format', Response::HTTP_BAD_REQUEST);
                 }
             }
@@ -221,17 +203,18 @@ class TaskApiController extends AbstractController
 
             // Set default values
             $task->setCreatedAt(new DateTimeImmutable());
-            $task->setUpdatedAt(new \DateTime());
+            $task->setUpdatedAt(new DateTime());
             $task->setStatus(Status::Open);
 
             $this->getUser()->addTask($task);
             $entityManager->persist($task);
             $entityManager->flush();
 
-            // Return success response
-            return $this->json(array('data' => $task, 'message' => 'Task created successfully'), Response::HTTP_CREATED);
-        } catch (\Exception $e) {
-            return $this->json(array('message' => 'Failed to create Task', 'data' => []), Response::HTTP_BAD_REQUEST);
+             Return success response*/
+
+            return BaseController::createResponse('Task added successfully', Response::HTTP_CREATED);
+        } catch (Exception $e) {
+            return BaseController::createResponse($e->getMessage(), $e->getCode());
         }
     }
 
@@ -243,5 +226,18 @@ class TaskApiController extends AbstractController
             }
         }
         return false;
+    }
+
+    private function createModelFromEntity(Task $task): TaskModel
+    {
+        return new TaskModel(
+            $task->getId(),
+            $task->getTitle(),
+            $task->getDescription(),
+            $task->getStatus()->name,
+            $task->getPriority()->value,
+            $task->getDueDate(),
+            $task->getCreatedAt(),
+            $task->getUpdatedAt());
     }
 }

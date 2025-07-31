@@ -6,7 +6,6 @@ import "react-day-picker/style.css";
 import {format} from "date-fns";
 
 import * as React from "react";
-import {StrictMode} from 'react';
 
 import {DialogOpenButton} from "./AddTaskButton";
 
@@ -160,9 +159,9 @@ export default function AddTaskForm(props: AddTaskFormProps) {
         <Dialog size="xl">
             <Dialog.Trigger as={DialogOpenButton}
                             className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"></Dialog.Trigger>
-            <Dialog.Overlay>
+            <Dialog.Overlay className="flex items-center justify-center min-h-screen">
                 <Dialog.Content
-                    className="w-[95vw] sm:w-[80vw] md:w-[60vw] lg:w-[40vw] max-w-5xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl shadow-slate-950/5">
+                    className="w-[95vw] sm:w-[80vw] md:w-[60vw] lg:w-[40vw] max-w-5xl bg-white dark:bg-gray-500 rounded-xl shadow-2xl shadow-slate-950/5 p-6">
                     <Dialog.DismissTrigger
                         as={IconButton}
                         size="sm"
@@ -178,7 +177,7 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                         className="mb-2 mt-3 flex items-center justify-center gap-1 text-foreground"
                     >
                     </Typography>
-                    <Typography type="h1" className="mb-1 text-lg sm:text-xl text-slate-800 font-bold dark:text-white">
+                    <Typography type="h1" className="mb-1 text-lg sm:text-xl text-slate-800 font-bold dark:text-white text-center">
                         Add Task
                     </Typography>
                     <form className="mt-4 sm:mt-6" onSubmit={handleSubmit}>
@@ -226,10 +225,18 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                                 onChange={handleInputChange}
                             />
                         </div>
-                        <div className="mb-3 sm:mb-4 space-y-1.5">
-                            <Radio id="priority" className="mb-3 sm:mb-4" value={formData.priority}
+                        <div className="mb-4 sm:mb-4 space-y-2">
+                            <Typography
+                                as="label"
+                                type="small"
+                                color="default"
+                                className="font-semibold text-sm mb-2 block"
+                            >
+                                Priority
+                            </Typography>
+                            <Radio id="priority" className="space-y-3 sm:space-y-2" value={formData.priority}
                                    onValueChange={handlePriorityChange} orientation="vertical">
-                                {Object.entries(props.priorities).map(([priorityValue, colorClass]) => {
+                                {Object.entries(props.priorities).map(([priorityValue]) => {
                                     // Map priority values to radio button values
                                     const radioValue = priorityValue.toLowerCase() as PriorityValue;
                                     const priorityId = radioValue;
@@ -240,18 +247,18 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                                         low: "data-[checked=true]:bg-green-500"
                                     };
                                     return (
-                                        <div key={priorityId} className="flex items-center gap-2">
+                                        <div key={priorityId} className="flex items-center gap-3 py-2 sm:py-1 cursor-pointer" onClick={() => handlePriorityChange(radioValue)}>
                                             <Radio.Item
                                                 id={priorityId}
                                                 value={radioValue}
                                                 name="priority"
-                                                className={`border border-gray-300 rounded-full w-5 h-5 ${colorClassMap[radioValue]}`}
+                                                className={`border border-gray-300 rounded-full w-6 h-6 sm:w-5 sm:h-5 ${colorClassMap[radioValue]} cursor-pointer`}
                                             >
                                                 <Radio.Indicator
-                                                    className={`w-3 h-3 rounded-full absolute top-1 left-1 `}/>
+                                                    className={`w-4 h-4 sm:w-3 sm:h-3 rounded-full absolute top-1 left-1`}/>
                                             </Radio.Item>
                                             <Typography as="label" htmlFor={priorityId}
-                                                        className="text-foreground text-sm dark:text-white">
+                                                        className="text-foreground text-base sm:text-sm dark:text-white cursor-pointer flex-1">
                                                 {priorityValue}
                                             </Typography>
                                         </div>
@@ -292,19 +299,22 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                                         mode="single"
                                         selected={formData.due_date}
                                         onSelect={handleDateChange}
-                                        showOutsideDays
+                                        showOutsideDays={false}
+
                                         className="border-0"
                                     />
                                 </Popover.Content>
                             </Popover>
                         </div>
-                        <Button
-                            type="submit"
-                            isFullWidth
-                            className="bg-slate-800 border-slate-800 text-slate-50 hover:bg-slate-700  dark:bg-blue-600 dark:border-blue-600  dark:hover:bg-blue-500 dark:text-white hover:border-slate-700 text-sm py-2.5"
-                        >
-                            Add Task
-                        </Button>
+                        <div className="mb-3 sm:mb-4 space-y-1.5" >
+                            <Button
+                                type="submit"
+                                isFullWidth={true}
+                                className="bg-slate-800 border-slate-800 text-slate-50 hover:bg-slate-700  dark:bg-blue-600 dark:border-blue-600  dark:hover:bg-blue-500 dark:text-white hover:border-slate-700 text-sm py-2.5 w-full"
+                            >
+                                Add Task
+                            </Button>
+                        </div>
                     </form>
                     <Typography
                         type="small"

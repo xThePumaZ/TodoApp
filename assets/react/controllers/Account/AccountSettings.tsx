@@ -32,7 +32,7 @@ function useUserAvatar() {
 
     React.useEffect(() => {
         setIsLoading(true);
-        fetch('/api/v1/user/profile_picture', {
+        fetch('/api/v1/user/loadProfilePicture', {
             method: 'GET'
         })
             .then(async response => {
@@ -44,9 +44,7 @@ function useUserAvatar() {
                 return response.json();
             })
             .then(data => {
-                if (data.profilePicture) {
-                    setProfilePicture(data.profilePicture);
-                }
+                setProfilePicture(data.data[0]);
                 setIsLoading(false);
             })
     }, []);
@@ -219,7 +217,7 @@ export default function AccountSettings() {
         }
 
         // Send password change request to the server
-        fetch('/api/user/change-password', {
+        fetch('/api/user/changePassword', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -267,49 +265,49 @@ export default function AccountSettings() {
         <Card className="w-full shadow-none bg-gray-100 dark:bg-gray-500">
             <CardHeader
                 color="transparent"
-                className="m-0 p-4 border-b border-gray-300">
+                className="m-0 p-3 sm:p-4 border-b border-gray-300">
                 <Tabs defaultValue="profile" value={activeTab} orientation="horizontal"
                       className="relative flex shrink-0 flex-col data-[orientation=horizontal]:flex-col data-[orientation=vertical]:flex-col rounded-md p-1 bg-surface-light dark:bg-surface w-full">
                         <Tabs.List className="relative z-0 bg-gray-300 w-full">
                         <Tabs.Trigger
                             value="profile"
-                            className="inline-flex relative z-[2] py-1.5 px-3 items-center justify-center align-middle text-black dark:text-black select-none font-sans font-medium text-center text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200 cursor-pointer"
+                            className="inline-flex relative z-[2] py-3 sm:py-1.5 px-4 sm:px-3 items-center justify-center align-middle text-black dark:text-black select-none font-sans font-medium text-center text-base sm:text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200 cursor-pointer"
                             onClick={() => setActiveTab("profile")}
                         >
-                            <ProfileCircle className="mr-2 h-4 w-4"/>
+                            <ProfileCircle className="mr-2 sm:mr-2 h-5 w-5 sm:h-4 sm:w-4"/>
                             User Profile
                         </Tabs.Trigger>
                         <Tabs.Trigger
                             value="password"
-                            className="inline-flex relative z-[2] py-1.5 px-3 items-center justify-center align-middle text-black dark:text-black select-none font-sans font-medium text-center text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200 cursor-pointer"
+                            className="inline-flex relative z-[2] py-3 sm:py-1.5 px-4 sm:px-3 items-center justify-center align-middle text-black dark:text-black select-none font-sans font-medium text-center text-base sm:text-sm aria-disabled:opacity-50 aria-disabled:pointer-events-none w-full data-[active=true]:bg-gray-200 cursor-pointer"
                             onClick={() => setActiveTab("password")}
                         >
-                            <Key className="mr-2 h-4 w-4"/>
+                            <Key className="mr-2 sm:mr-2 h-5 w-5 sm:h-4 sm:w-4"/>
                             Password
                         </Tabs.Trigger>
                     </Tabs.List>
                     <Tabs.Panel value="profile" className="p-1 w-full block">
-                        <CardBody className="p-4">
+                        <CardBody className="p-4 sm:p-4">
                             {successMessage && (
-                                <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-md">
+                                <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-md text-sm sm:text-base">
                                     {successMessage}
                                 </div>
                             )}
-                            <div className="flex flex-col items-center mb-6">
-                                <div className="relative mb-4 group">
+                            <div className="flex flex-col items-center mb-6 sm:mb-6">
+                                <div className="relative mb-4 sm:mb-4 group">
                                     {!isLoading && (
                                         <Avatar
                                             src={profilePicture}
                                             alt="Profile"
-                                            size="md"
-                                            className="cursor-pointer border-2 border-gray-200 rounded-full max-h-64 flex items-start"
+                                            size="lg"
+                                            className="cursor-pointer border-2 border-gray-200 rounded-full max-h-32 sm:max-h-64 flex items-start"
                                             onClick={handleImageClick}/>
                                     )}
                                     <div
                                         className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                                         onClick={handleImageClick}
                                     >
-                                        <Camera className="w-8 h-8 text-white"/>
+                                        <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-white"/>
                                     </div>
                                     <input
                                         type="file"
@@ -319,16 +317,16 @@ export default function AccountSettings() {
                                         onChange={handleImageChange}
                                     />
                                 </div>
-                                <Typography variant="h6" className="mb-1 text-black dark:text-gray-50">
+                                <Typography variant="h6" className="mb-2 sm:mb-1 text-black dark:text-gray-50 text-lg sm:text-xl text-center">
                                     Change Profile Picture
                                 </Typography>
-                                <Typography className="text-black dark:text-gray-100 text-sm">
+                                <Typography className="text-black dark:text-gray-100 text-sm sm:text-sm text-center px-4 sm:px-0">
                                     Click on the image to upload a new profile picture
                                 </Typography>
                             </div>
                             <div className="flex justify-center">
                                 <Button
-                                    className="mt-4 bg-blue-400 text-white hover:bg-blue-600 focus:bg-blue-600 active:bg-blue-700 dark:text-white"
+                                    className="mt-4 bg-blue-400 text-white hover:bg-blue-600 focus:bg-blue-600 active:bg-blue-700 dark:text-white py-3 px-6 sm:py-2 sm:px-4 text-base sm:text-sm"
                                     disabled={!imageFile}
                                     onClick={handleProfileImageSave}>
                                     Save Changes
@@ -337,27 +335,27 @@ export default function AccountSettings() {
                         </CardBody>
                     </Tabs.Panel>
                     <Tabs.Panel value="password" className="p-1 w-full block">
-                        <CardBody className="p-4">
+                        <CardBody className="p-4 sm:p-4">
 
                             {errorMessage && (
-                                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md">
+                                <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm sm:text-base">
                                     {errorMessage}
                                 </div>
                             )}
 
                             {successMessage && (
-                                <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-md">
+                                <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-md text-sm sm:text-base">
                                     {successMessage}
                                 </div>
                             )}
-                            <form onSubmit={handlePasswordSubmit}>
-                                <div className="mb-4 space-y-1.5">
+                            <form onSubmit={handlePasswordSubmit} className="space-y-5 sm:space-y-4">
+                                <div className="space-y-2">
                                     <Typography
                                         as="label"
                                         htmlFor="currentPassword"
                                         type="small"
                                         color="default"
-                                        className="font-semibold text-sm text-black dark:text-gray-50"
+                                        className="font-semibold text-base sm:text-sm text-black dark:text-gray-50"
                                     >
                                         Current Password
                                     </Typography>
@@ -365,25 +363,25 @@ export default function AccountSettings() {
                                         id="currentPassword"
                                         type="password"
                                         placeholder="Enter your current password"
-                                        className={`text-sm  text-black dark:text-gray-50 ${
+                                        className={`text-base sm:text-sm text-black dark:text-gray-50 py-3 sm:py-2 ${
                                             errors.currentPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.currentPassword}
                                         onChange={handlePasswordChange}
                                     />
                                     {errors.currentPassword && (
-                                        <p className="text-red-500 text-xs mt-1">
+                                        <p className="text-red-500 text-sm sm:text-xs mt-1">
                                             {errors.currentPassword}
                                         </p>
                                     )}
                                 </div>
-                                <div className="mb-4 space-y-1.5">
+                                <div className="space-y-2">
                                     <Typography
                                         as="label"
                                         htmlFor="newPassword"
                                         type="small"
                                         color="default"
-                                        className="font-semibold text-sm text-black dark:text-gray-50"
+                                        className="font-semibold text-base sm:text-sm text-black dark:text-gray-50"
                                     >
                                         New Password
                                     </Typography>
@@ -391,25 +389,25 @@ export default function AccountSettings() {
                                         id="newPassword"
                                         type="password"
                                         placeholder="Enter your new password"
-                                        className={`text-sm text-black dark:text-gray-50 ${
+                                        className={`text-base sm:text-sm text-black dark:text-gray-50 py-3 sm:py-2 ${
                                             errors.newPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.newPassword}
                                         onChange={handlePasswordChange}
                                     />
                                     {errors.newPassword && (
-                                        <p className="text-red-500 text-xs mt-1">
+                                        <p className="text-red-500 text-sm sm:text-xs mt-1">
                                             {errors.newPassword}
                                         </p>
                                     )}
                                 </div>
-                                <div className="mb-4 space-y-1.5">
+                                <div className="space-y-2">
                                     <Typography
                                         as="label"
                                         htmlFor="confirmPassword"
                                         type="small"
                                         color="default"
-                                        className="font-semibold text-sm text-black dark:text-gray-50"
+                                        className="font-semibold text-base sm:text-sm text-black dark:text-gray-50"
                                     >
                                         Confirm New Password
                                     </Typography>
@@ -417,21 +415,21 @@ export default function AccountSettings() {
                                         id="confirmPassword"
                                         type="password"
                                         placeholder="Confirm your new password"
-                                        className={`text-sm text-black dark:text-gray-50 ${
+                                        className={`text-base sm:text-sm text-black dark:text-gray-50 py-3 sm:py-2 ${
                                             errors.confirmPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.confirmPassword}
                                         onChange={handlePasswordChange}
                                     />
                                     {errors.confirmPassword && (
-                                        <p className="text-red-500 text-xs mt-1">
+                                        <p className="text-red-500 text-sm sm:text-xs mt-1">
                                             {errors.confirmPassword}
                                         </p>
                                     )}
                                 </div>
                                 <Button
                                     type="submit"
-                                    className="mt-4 bg-blue-400 text-white hover:bg-blue-600 focus:bg-blue-600 active:bg-blue-700 dark:text-white">
+                                    className="mt-6 sm:mt-4 bg-blue-400 text-white hover:bg-blue-600 focus:bg-blue-600 active:bg-blue-700 dark:text-white py-3 px-6 sm:py-2 sm:px-4 text-base sm:text-sm w-full sm:w-auto">
                                     Change Password
                                 </Button>
                             </form>

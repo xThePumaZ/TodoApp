@@ -4,26 +4,23 @@ declare(strict_types=1);
 
 namespace App\Controller\Api\v1;
 
+use App\Controller\BaseController;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
-class UserApiController extends AbstractController
+class UserApiController extends BaseController
 {
     #[Route('/api/v1/user/change_picture', name: 'app_account_change_picture')]
     public function changePicture(EntityManagerInterface $entityManager): Response
     {
         $request = Request::createFromGlobals();
         if (!$request->files->has('profileImage')) {
-            return $this->json(
-                [
-                    'message' => 'No profile image provided.',
-                ],
-                Response::HTTP_BAD_REQUEST
-            );
+            return BaseController::createResponse('No profile image provided.', Response::HTTP_BAD_REQUEST);
         }
 
         $profilePicture = base64_encode($request->files->get('profileImage')->getContent());
@@ -31,57 +28,42 @@ class UserApiController extends AbstractController
         $entityManager->persist($this->getUser());
         $entityManager->flush();
 
-        return $this->json(
-            [
-                'message' => 'Profile picture was updated successfully.',
-            ],
-            Response::HTTP_OK
-        );
+        return BaseController::createResponse('Profile picture updated successfully.');
     }
 
-    #[Route('/api/v1/user/profile_picture', name: 'app_account_load_profile_picture')]
-    public function loadProfilePicture(EntityManagerInterface $entityManager): \Symfony\Component\HttpFoundation\JsonResponse
+    #[Route('/api/v1/user/loadProfilePicture', name: 'app_account_load_profile_picture')]
+    public function loadProfilePicture(EntityManagerInterface $entityManager): Response
     {
         if ($this->getUser()) {
             $user = $entityManager->getRepository(User::class)->find($this->getUser()->getId());
             if (!empty($user->getProfilePicture())) {
-                return $this->json(
-                    [
-                        'message' => 'Profile picture loaded successfully.',
-                        'profilePicture' => 'data:image/jpeg;base64, ' . $user->getProfilePicture(),
-                    ],
-                    Response::HTTP_OK
-                );
-            } else {
-                return $this->json(
-                    [
-                        'message' => 'No profile picture found, using default image.',
-                        'profilePicture' => 'data:image/jpeg;base64, ' . base64_encode(file_get_contents('build/images/default-avatar.png')),
-                    ],
-                    Response::HTTP_OK
-                );
+                return BaseController::createResponse('Profile picture loaded successfully.', Response::HTTP_OK, ['data:image/jpeg;base64, ' . stream_get_contents($user->getProfilePicture()),
+                ]);
             }
         }
-        return $this->json(
-            [
-                'message' => 'No profile picture found.',
-            ],
-            Response::HTTP_NOT_FOUND
-        );
+
+        return BaseController::createResponse('No profile picture found, using default image.', Response::HTTP_OK, [
+            'data:image/jpeg;base64, ' . base64_encode(file_get_contents('build/images/default-avatar.png')),
+        ]);
     }
 
-    #[Route('/api/v1/user/change_password', name: 'app_account_change_password')]
-    public function changePassword(): Response
+    #[Route('/api/v1/user/changePassword', name: 'app_account_change_password')]
+    public function changePassword(EntityManagerInterface $entityManager, UserPasswordHasherInterface $userPasswordHasher): Response
     {
-        // Logic for changing the user's password would go here.
-        // This could involve validating the current password,
-        // ensuring the new password meets security requirements,
-        // and updating the user's password in the database.
-        return $this->json(
-            [
-                'message' => 'Change password endpoint is not yet implemented.',
-            ],
-            Response::HTTP_NOT_IMPLEMENTED
-        );
+        $request = Request::createFromGlobals();
+
+        if (!$request->request->has('currentPassword') || !$request->request->has('newPassword')) {
+            return BaseController::createResponse('No current password provided.', Response::HTTP_BAD_REQUEST);
+        }
+
+        $user = $entityManager->getRepository(User::class)->find($this->getUser()->getId());
+        $user->setPassword($userPasswordHasher->hashPassword($user, $request->request->get('currentPassword')));
+
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+
+        return BaseController::createResponse('Password updated successfully.');
+
     }
 }

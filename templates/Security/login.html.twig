@@ -14,11 +14,11 @@
 {% endblock %}
 
 {% block body %}
-    <div class="min-h-screen flex items-center justify-center bg-gray-100">
-        <div class="w-full max-w-md bg-white p-8 rounded shadow">
-            <h1 class="text-2xl font-bold mb-6 text-center">Login</h1>
+    <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-600">
+        <div class="w-full max-w-md bg-white dark:bg-gray-500 p-8 rounded shadow">
+            <h1 class="text-2xl font-bold mb-6 text-center dark:text-gray-100">Login</h1>
             {% if error %}
-                <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">
+                <div class="mb-4 p-3 bg-red-100 text-red-500 rounded">
                     {{ error.messageKey|trans(error.messageData, 'security') }}
                 </div>
             {% endif %}
@@ -32,15 +32,15 @@
 
             <form method="post" action="{{ path('app_login') }}" class="space-y-4">
                 <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700">Benutzername</label>
+                    <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-100">Benutzername</label>
                     <input type="text" value="{{ last_username }}" name="_username" id="username"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300 dark:border-cyan-300 dark:focus:border-cyan-500 dark:text-gray-100"
                            autocomplete="username" required autofocus>
                 </div>
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700">Passwort</label>
+                    <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-100">Passwort</label>
                     <input type="password" name="_password" id="password"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300 dark:text-gray-100 dark:border-cyan-300 dark:focus:border-cyan-500"
                            autocomplete="current-password" required>
                 </div>
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
@@ -50,7 +50,7 @@
                 </button>
             </form>
             <div class="mt-4 text-center">
-                <a href="{{ path('app_register') }}" class="text-blue-600 hover:underline">Noch kein Konto? Registrieren</a>
+                <a href="{{ path('app_register') }}" class="text-blue-600 hover:underline dark:text-blue-400">Noch kein Konto? Registrieren</a>
             </div>
         </div>
     </div>

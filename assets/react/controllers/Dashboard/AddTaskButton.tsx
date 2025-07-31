@@ -13,7 +13,7 @@ export const DialogOpenButton = React.forwardRef<
     return (
         <Button
             ref={ref}
-            className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            className="inline-block px-6 py-3 sm:px-4 sm:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-base sm:text-sm font-medium"
             {...props}>
             Add Task
         </Button>

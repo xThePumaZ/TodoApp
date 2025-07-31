@@ -12,9 +12,9 @@
 
 {% block body %}
     <div class="min-h-4/5 bg-gray-100 dark:bg-gray-700 max-w-screen-xl">
-        <div class="max-w-7xl mx-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between py-4 sm:py-6 mb-4 sm:mb-8 gap-4">
-                <h1 class="text-xl sm:text-2xl font-bold text-left dark:text-white">Task Dashboard</h1>
+                <h1 class="text-xl sm:text-2xl font-bold text-left dark:text-gray-100">Task Dashboard</h1>
                 <div {{ react_component('Dashboard/AddTaskForm',{ url: path('app_task_addtask'), priorities: priority }) }}></div>
             </div>
             <div {{ react_component('Dashboard/TaskBoard') }}></div>
