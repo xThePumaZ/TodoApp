@@ -9,6 +9,7 @@ use App\Config\Status;
 use App\Controller\BaseController;
 use App\Entity\Task;
 use App\Form\AddTaskFormType;
+use App\Form\EditTaskFormType;
 use App\Model\Task as TaskModel;
 use DateTime;
 use DateTimeImmutable;
@@ -108,7 +109,7 @@ class TaskApiController extends BaseController
             $entityManager->remove($task);
             $entityManager->flush();
         }
-        // Redirect to the dashboard after deletion
+
         return $this->redirectToRoute('app_dashboard');
     }
 
@@ -153,68 +154,79 @@ class TaskApiController extends BaseController
     {
         try {
             $task = new Task();
-//            $title = $request->request->get('title');
-//
-//            $description = $request->request->get('description');
-//            $priority = Priority::tryFrom($request->request->get('priority'));
-//            $dueDateString = $request->request->get('due_date');
+            $requestData = $request->request->all();
+
+            if ($requestData['priority'] !== null) {
+                $requestData['priority'] = Priority::tryFrom($requestData['priority']);
+            }
 
             $addTaskForm = $this->createForm(AddTaskFormType::class, $task)->handleRequest($request);
-            $addTaskForm->submit($request->request->all());
+            $addTaskForm->submit($requestData);
 
             if ($addTaskForm->isSubmitted() && $addTaskForm->isValid()) {
                 $task->setTitle($addTaskForm->get('title')->getData());
                 $task->setDescription($addTaskForm->get('description')->getData());
                 $task->setPriority($addTaskForm->get('priority')->getData());
-                $task->setDueDate(new DateTime($addTaskForm->get('dueDate')->getData()));
+                $task->setDueDate($addTaskForm->get('due_date')->getData());
 
                 $task->setCreatedAt(new DateTimeImmutable());
                 $task->setUpdatedAt(new DateTime());
                 $task->setStatus(Status::Open);
 
-
+                $task->setUserId($this->getUser());
 
                 $entityManager->persist($task);
                 $entityManager->flush();
             }
-
-/*            if (empty($title)) {
-                return new Response(null, Response::HTTP_BAD_REQUEST);
-            }
-
-            if ($description) {
-                $task->setDescription($description);
-            }
-
-            if ($priority) {
-                $task->setPriority($priority);
-            }
-
-            if ($dueDateString) {
-                try {
-                    $dueDate = new DateTime($dueDateString);
-                    $task->setDueDate($dueDate);
-                } catch (Exception $e) {
-                    return new Response('Invalid date format', Response::HTTP_BAD_REQUEST);
-                }
-            }
-
-            $task->setTitle($title);
-
-            // Set default values
-            $task->setCreatedAt(new DateTimeImmutable());
-            $task->setUpdatedAt(new DateTime());
-            $task->setStatus(Status::Open);
-
-            $this->getUser()->addTask($task);
-            $entityManager->persist($task);
-            $entityManager->flush();
-
-             Return success response*/
-
-            return BaseController::createResponse('Task added successfully', Response::HTTP_CREATED);
+            return BaseController::createResponse('Task added successfully');
         } catch (Exception $e) {
             return BaseController::createResponse($e->getMessage(), $e->getCode());
+        }
+    }
+
+    #[Route('/api/v1/task/editTask', name: 'app_task_edittask', methods: ['POST'])]
+    public function editTask(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        try {
+            $requestData = $request->request->all();
+
+            if (!isset($requestData['id'])) {
+                return BaseController::createResponse('Task ID is required', Response::HTTP_BAD_REQUEST);
+            }
+
+            $task = $entityManager->getRepository(Task::class)->find($requestData['id']);
+
+            if (!$task) {
+                return BaseController::createResponse('Task not found', Response::HTTP_NOT_FOUND);
+            }
+
+            if ($task->getUserId() !== $this->getUser()) {
+                return BaseController::createResponse('Access denied', Response::HTTP_FORBIDDEN);
+            }
+
+            if ($requestData['priority'] !== null && $requestData['priority'] !== '') {
+                $requestData['priority'] = Priority::tryFrom($requestData['priority']);
+            }
+
+            $editTaskForm = $this->createForm(EditTaskFormType::class, $task)->handleRequest($request);
+            $editTaskForm->submit($requestData);
+
+            if ($editTaskForm->isSubmitted() && $editTaskForm->isValid()) {
+                $task->setTitle($editTaskForm->get('title')->getData());
+                $task->setDescription($editTaskForm->get('description')->getData());
+                $task->setPriority($editTaskForm->get('priority')->getData());
+                $task->setDueDate($editTaskForm->get('due_date')->getData());
+
+                $task->setUpdatedAt(new DateTime());
+
+                $entityManager->flush();
+
+                return BaseController::createResponse('Task updated successfully');
+            }
+
+            return BaseController::createResponse('Invalid form data', Response::HTTP_BAD_REQUEST);
+        } catch (Exception $e) {
+            return BaseController::createResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

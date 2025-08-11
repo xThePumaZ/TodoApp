@@ -1,9 +1,11 @@
 import * as React from "react";
 import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { Badge } from "@material-tailwind/react";
+import EditTaskModal from "./EditTaskModal";
 
-export default function TaskItem({ task, onDelete }) {
+export default function TaskItem({ task, csfr_token }) {
     const taskItemRef = React.useRef(null);
+    const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
 
     React.useEffect(() => {
         const element = taskItemRef.current;
@@ -37,6 +39,44 @@ export default function TaskItem({ task, onDelete }) {
                 alert('Error deleting task: ' + error.message);
             });
         }
+    };
+
+    const handleEdit = (e) => {
+        e.preventDefault();
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditSave = (taskData: { id: string | Blob; title: string | Blob; description: string; due_date: any; priority: string; csfr_token}) => {
+        const formData = new FormData();
+        formData.append('id', taskData.id);
+        formData.append('title', taskData.title);
+        formData.append('description', taskData.description || '');
+        formData.append('due_date', taskData.due_date || '');
+        formData.append('priority', taskData.priority || '');
+        formData.append('_token', taskData.csfr_token || csfr_token);
+
+        fetch('/api/v1/task/editTask', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                setIsEditModalOpen(false);
+                // Reload the page to reflect changes
+                window.location.reload();
+            } else {
+                console.error('Failed to update task');
+                alert('Failed to update task');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating task:', error);
+            alert('Error updating task: ' + error.message);
+        });
+    };
+
+    const handleEditClose = () => {
+        setIsEditModalOpen(false);
     };
 
     const formatDate = (dateString) => {
@@ -91,6 +131,15 @@ export default function TaskItem({ task, onDelete }) {
                     )}
                     <button
                         type="button"
+                        onClick={handleEdit}
+                        className="text-gray-400 hover:text-blue-600 p-2 sm:p-1 -m-2 sm:-m-1"
+                    >
+                        <svg className="w-6 h-6 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
                         onClick={handleDelete}
                         className="text-gray-400 hover:text-red-600 p-2 sm:p-1 -m-2 sm:-m-1"
                     >
@@ -115,6 +164,15 @@ export default function TaskItem({ task, onDelete }) {
                     Zuletzt aktualisiert: {formatDateTime(task.updatedAt || task.createdAt)}
                 </span>
             </div>
+
+            <EditTaskModal
+                task={task}
+                isOpen={isEditModalOpen}
+                onClose={handleEditClose}
+                onSave={handleEditSave}
+                priorities={{ "Low": "Low", "Medium": "Medium", "High": "High" }}
+                csfr_token={csfr_token}
+            />
         </div>
     );
 }

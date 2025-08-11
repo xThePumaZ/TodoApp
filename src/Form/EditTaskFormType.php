@@ -10,11 +10,16 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class AddTaskFormType extends AbstractType
+class EditTaskFormType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
+            ->add('id', TextType::class, [
+                'label' => 'Task ID',
+                'required' => true,
+                'attr' => ['readonly' => true]
+            ])
             ->add('title', TextType::class, [
                 'label' => 'Task Title',
                 'required' => true,
@@ -41,7 +46,7 @@ class AddTaskFormType extends AbstractType
             'data_class' => 'App\Entity\Task',
             'csrf_protection' => true,
             'csrf_field_name' => '_token',
-            'csrf_token_id' => 'add_task',
+            'csrf_token_id' => 'edit_task',
         ]);
     }
 }

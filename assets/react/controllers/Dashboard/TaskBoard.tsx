@@ -29,7 +29,7 @@ function loadTasksWithStatus() {
     return { tasksByStatus, isLoading };
 }
 
-export default function TaskBoard() {
+export default function TaskBoard(props : any) {
 
     const {tasksByStatus, isLoading} = loadTasksWithStatus();
 
@@ -44,6 +44,7 @@ export default function TaskBoard() {
                     key={status}
                     status={status}
                     tasks={tasks}
+                    csfr_token={props.csfr_token} // Assuming csrf_token is part of tasksByStatus
                 />
             ))}
         </div>

@@ -2,7 +2,7 @@ import * as React from "react";
 import TaskItem from "./TaskItem";
 import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 
-export default function TaskColumn({ status, tasks }) {
+export default function TaskColumn({ status, tasks, csfr_token }) {
     const columnRef = React.useRef(null);
 
     React.useEffect(() => {
@@ -57,7 +57,7 @@ export default function TaskColumn({ status, tasks }) {
                         <TaskItem
                             key={task.id}
                             task={task}
-                            onDelete={() => {}}
+                            csfr_token={csfr_token}
                         />
                     ))
                 ) : (
