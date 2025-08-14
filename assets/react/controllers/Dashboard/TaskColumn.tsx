@@ -4,21 +4,33 @@ import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element
 
 export default function TaskColumn({ status, tasks, csfr_token }) {
     const columnRef = React.useRef(null);
+    const [isDragOver, setIsDragOver] = React.useState(false);
 
     React.useEffect(() => {
         const element = columnRef.current;
         if (element) {
             return dropTargetForElements({
                 element: element,
+                onDragEnter() {
+                    setIsDragOver(true);
+                },
+                onDragLeave() {
+                    setIsDragOver(false);
+                },
                 onDrop({source}) {
-                    if (status !== source.element.getAttribute('data-status')) {
+                    setIsDragOver(false);
+                    const sourceData = source.data;
+                    const sourceStatus = sourceData.status || source.element.getAttribute('data-status');
+                    const taskId = sourceData.taskId || source.element.getAttribute('data-task-id');
+
+                    if (status !== sourceStatus) {
                         fetch(`/api/v1/task/update_status`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
-                                task_id: source.element.getAttribute('data-task-id'),
+                                task_id: taskId,
                                 status: status,
                             }),
                         }).then(r => {
@@ -38,6 +50,40 @@ export default function TaskColumn({ status, tasks, csfr_token }) {
         }
     }, [status]);
 
+    // Mobile touch event handlers for visual feedback
+    React.useEffect(() => {
+        const element = columnRef.current;
+        if (!element) return;
+
+        const handleTouchMove = (e) => {
+            // Check if there's an active drag operation
+            const draggedElement = document.querySelector('.task-item[style*="opacity: 0.7"]');
+            if (draggedElement) {
+                const touch = e.touches[0];
+                const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+                const targetColumn = elementBelow?.closest('.task-list')?.closest('[data-status]');
+
+                if (targetColumn === element) {
+                    setIsDragOver(true);
+                } else {
+                    setIsDragOver(false);
+                }
+            }
+        };
+
+        const handleTouchEnd = () => {
+            setIsDragOver(false);
+        };
+
+        document.addEventListener('touchmove', handleTouchMove, { passive: true });
+        document.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+        return () => {
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleTouchEnd);
+        };
+    }, []);
+
     const capitalizeFirst = (str) => {
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     };
@@ -45,7 +91,9 @@ export default function TaskColumn({ status, tasks, csfr_token }) {
     return (
         <div
             ref={columnRef}
-            className="bg-white dark:bg-gray-500 rounded shadow p-4 sm:p-6 task-list mb-4 sm:mb-6 border border-gray-200 dark:border-gray-700"
+            className={`bg-white dark:bg-gray-500 rounded shadow p-4 sm:p-6 task-list mb-4 sm:mb-6 border border-gray-200 dark:border-gray-700 transition-colors duration-200 ${
+                isDragOver ? 'bg-blue-50 dark:bg-blue-900 border-blue-300 dark:border-blue-600 border-2 border-dashed' : ''
+            }`}
             data-status={status}
         >
             <h2 className="text-xl sm:text-lg font-bold mb-4 sm:mb-4 text-gray-800 dark:text-white">

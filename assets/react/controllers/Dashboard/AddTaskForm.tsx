@@ -177,7 +177,7 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                                 htmlFor="title"
                                 type="small"
                                 color="default"
-                                className="font-semibold text-sm"
+                                className="font-semibold text-base"
                             >
                                 Title
                             </Typography>
@@ -186,7 +186,7 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                                 name="title"
                                 type="text"
                                 placeholder="Task Title..."
-                                className={`text-sm ${errors.title ? 'border-red-500' : ''}`}
+                                className={`text-sm p-2 ${errors.title ? 'border-red-500' : ''}`}
                                 value={formData.title}
                                 onChange={handleInputChange}
                                 required
@@ -201,7 +201,7 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                                 htmlFor="description"
                                 type="small"
                                 color="default"
-                                className="font-semibold text-sm"
+                                className="font-semibold text-base"
                             >
                                 Description
                             </Typography>
@@ -210,7 +210,7 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                                 name="description"
                                 placeholder="Task Description..."
                                 rows={6}
-                                className="text-sm"
+                                className="text-sm p-2"
                                 value={formData.description}
                                 onChange={handleInputChange}
                             />
@@ -220,7 +220,7 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                                 as="label"
                                 type="small"
                                 color="default"
-                                className="font-semibold text-sm mb-2 block"
+                                className="font-semibold text-base mb-2 block"
                             >
                                 Priority
                             </Typography>
@@ -262,7 +262,7 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                                 htmlFor="due_date"
                                 type="small"
                                 color="default"
-                                className="font-semibold text-sm"
+                                className="font-semibold text-base"
                             >
                                 Due Date
                             </Typography>
@@ -278,7 +278,7 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                                             onClick={(e: React.MouseEvent) => e.preventDefault()}
                                             placeholder="Due Date"
                                             value={formData.due_date ? format(formData.due_date, "PPP") : ""}
-                                            className="text-sm"
+                                            className="text-sm p-2 cursor-pointer"
                                         />
                                     </div>
                                 </Popover.Trigger>

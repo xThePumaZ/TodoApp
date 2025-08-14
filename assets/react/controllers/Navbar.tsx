@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-    IconButton,
     Typography,
     Navbar,
     List,
@@ -9,10 +8,8 @@ import {
 } from "@material-tailwind/react";
 import {
     LogOut,
-    Menu as MenuIcon,
     Settings,
     UserCircle,
-    Xmark,
 } from "iconoir-react";
 
 
@@ -63,7 +60,7 @@ function ProfileMenu() {
                     <Settings className="mr-3 sm:mr-2 h-5 w-5 sm:h-[18px] sm:w-[18px]"/> Edit Profile
                 </Menu.Item>
                 <hr className="!my-2 sm:!my-1 -mx-1 border-secondary-dark"/>
-                <Menu.Item
+                <Menu.Item as="a" href="/logout"
                     className="w-full text-start flex items-center py-3 sm:py-1.5 px-3 sm:px-2.5 rounded align-middle select-none outline-none font-sans transition-all duration-300 ease-in aria-disabled:opacity-50 aria-disabled:pointer-events-none bg-transparent dark:hover:text-white dark:focus:text-white data-[selected=true]:bg-surface data-[selected=true]:text-black dark:data-[selected=true]:text-white dark:bg-opacity-70 text-error hover:bg-error/10 hover:text-error focus:bg-error/10 focus:text-error text-red-600 cursor-pointer hover:bg-red-200 text-base sm:text-sm">
                     <LogOut className="mr-3 sm:mr-2 h-5 w-5 sm:h-[18px] sm:w-[18px]"/>
                     Logout
@@ -74,13 +71,6 @@ function ProfileMenu() {
 }
 
 export default function NavbarWithMegaMenu() {
-    const [openNav, setOpenNav] = React.useState(false);
-    React.useEffect(() => {
-        window.addEventListener(
-            "resize",
-            () => window.innerWidth >= 960 && setOpenNav(false),
-        );
-    }, []);
 
     return (
         <Navbar className="mx-auto w-full max-w-screen-xl bg-gray-200 dark:bg-gray-500 px-2 sm:px-4">
@@ -94,32 +84,14 @@ export default function NavbarWithMegaMenu() {
                     WhatsToDo
                 </Typography>
                 <div className="flex items-center gap-2">
-                    <IconButton
-                        size="lg"
-                        variant="ghost"
-                        color="secondary"
-                        onClick={() => setOpenNav(!openNav)}
-                        className="grid lg:hidden dark:border-white"
-                    >
-                        {openNav ? (
-                            <Xmark className="h-5 w-5"/>
-                        ) : (
-                            <MenuIcon className="h-5 w-5"/>
-                        )}
-                    </IconButton>
+                    <div className="lg:hidden">
+                        <ProfileMenu/>
+                    </div>
                     <div className="hidden lg:block">
                         <ProfileMenu/>
                     </div>
                 </div>
             </div>
-            {/* Mobile menu */}
-            {openNav && (
-                <div className="lg:hidden mt-2 pb-2 border-t border-gray-300 dark:border-gray-600">
-                    <div className="flex justify-center pt-2">
-                        <ProfileMenu/>
-                    </div>
-                </div>
-            )}
         </Navbar>
     );
 }

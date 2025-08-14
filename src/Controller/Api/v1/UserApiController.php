@@ -39,12 +39,14 @@ class UserApiController extends BaseController
             if (!empty($user->getProfilePicture())) {
                 return BaseController::createResponse('Profile picture loaded successfully.', Response::HTTP_OK, ['data:image/jpeg;base64, ' . stream_get_contents($user->getProfilePicture()),
                 ]);
+            } else {
+                return BaseController::createResponse('No profile picture found, using default image.', Response::HTTP_OK, [
+                    'data:image/jpeg;base64, ' . base64_encode(file_get_contents('build/images/default-avatar.png')),
+                ]);
             }
+        } else {
+            return BaseController::createResponse('No user found.', Response::HTTP_UNAUTHORIZED);
         }
-
-        return BaseController::createResponse('No profile picture found, using default image.', Response::HTTP_OK, [
-            'data:image/jpeg;base64, ' . base64_encode(file_get_contents('build/images/default-avatar.png')),
-        ]);
     }
 
     #[Route('/api/v1/user/changePassword', name: 'app_account_change_password')]

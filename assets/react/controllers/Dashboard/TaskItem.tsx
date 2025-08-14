@@ -6,15 +6,100 @@ import EditTaskModal from "./EditTaskModal";
 export default function TaskItem({ task, csfr_token }) {
     const taskItemRef = React.useRef(null);
     const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
+    const [isDragging, setIsDragging] = React.useState(false);
+    const [touchStartPos, setTouchStartPos] = React.useState({ x: 0, y: 0 });
 
     React.useEffect(() => {
         const element = taskItemRef.current;
         if (element) {
             return draggable({
                 element: element,
+                getInitialData: () => ({
+                    taskId: task.id,
+                    status: task.status?.name || task.status
+                }),
             });
         }
-    }, []);
+    }, [task.id, task.status]);
+
+    // Mobile touch event handlers
+    const handleTouchStart = (e) => {
+        const touch = e.touches[0];
+        setTouchStartPos({ x: touch.clientX, y: touch.clientY });
+        setIsDragging(false);
+    };
+
+    const handleTouchMove = (e) => {
+        if (!taskItemRef.current) return;
+
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - touchStartPos.x);
+        const deltaY = Math.abs(touch.clientY - touchStartPos.y);
+
+        // Start dragging if moved more than 10px
+        if ((deltaX > 10 || deltaY > 10) && !isDragging) {
+            setIsDragging(true);
+            e.preventDefault();
+
+            // Add visual feedback
+            taskItemRef.current.style.opacity = '0.7';
+            taskItemRef.current.style.transform = 'scale(1.05)';
+            taskItemRef.current.style.zIndex = '1000';
+            taskItemRef.current.style.position = 'relative';
+        }
+
+        if (isDragging) {
+            e.preventDefault();
+        }
+    };
+
+    const handleTouchEnd = (e) => {
+        if (!isDragging || !taskItemRef.current) {
+            setIsDragging(false);
+            return;
+        }
+
+        const touch = e.changedTouches[0];
+        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+        const targetColumn = elementBelow?.closest('.task-list')?.closest('[data-status]');
+
+        // Reset visual styles
+        taskItemRef.current.style.opacity = '';
+        taskItemRef.current.style.transform = '';
+        taskItemRef.current.style.zIndex = '';
+        taskItemRef.current.style.position = '';
+
+        if (targetColumn) {
+            const newStatus = targetColumn.getAttribute('data-status');
+            const currentStatus = task.status?.name || task.status;
+
+            if (newStatus && newStatus !== currentStatus) {
+                // Update task status via API
+                fetch(`/api/v1/task/update_status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        task_id: task.id,
+                        status: newStatus,
+                    }),
+                }).then(r => {
+                    if (r.status === 200) {
+                        // Reload the page to reflect changes
+                        window.location.reload();
+                    } else {
+                        throw new Error('Network response was not ok');
+                    }
+                }).catch(error => {
+                    console.error('Error updating task status:', error);
+                    alert('Error updating task status: ' + error.message);
+                });
+            }
+        }
+
+        setIsDragging(false);
+    };
 
     const handleDelete = (e) => {
         e.preventDefault();
@@ -116,6 +201,10 @@ export default function TaskItem({ task, csfr_token }) {
             className="relative flex flex-col bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm border border-slate-200 rounded-lg w-full task-item"
             data-task-id={task.id}
             data-status={task.status?.name || task.status}
+            style={{ touchAction: 'none' }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
         >
             <div className="mx-3 sm:mx-3 mb-0 border-b border-slate-200 pt-3 sm:pt-3 pb-3 sm:pb-2 px-2 sm:px-1 flex items-center justify-between">
                 <div className="flex items-center flex-1 min-w-0">

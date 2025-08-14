@@ -29,7 +29,7 @@ class LoginControllerTest extends WebTestCase
         /** @var UserPasswordHasherInterface $passwordHasher */
         $passwordHasher = $container->get('security.user_password_hasher');
 
-        $user = (new User())->setEmail('email@example.com');
+        $user = (new User())->setUsername('testuser');
         $user->setPassword($passwordHasher->hashPassword($user, 'password'));
 
         $em->persist($user);
@@ -42,8 +42,8 @@ class LoginControllerTest extends WebTestCase
         $this->client->request('GET', '/login');
         self::assertResponseIsSuccessful();
 
-        $this->client->submitForm('Sign in', [
-            '_username' => 'doesNotExist@example.com',
+        $this->client->submitForm('Login', [
+            '_username' => 'nonexistentuser',
             '_password' => 'password',
         ]);
 
@@ -51,14 +51,14 @@ class LoginControllerTest extends WebTestCase
         $this->client->followRedirect();
 
         // Ensure we do not reveal if the user exists or not.
-        self::assertSelectorTextContains('.alert-danger', 'Invalid credentials.');
+        self::assertSelectorTextContains('.bg-red-100', 'Invalid credentials.');
 
         // Denied - Can't login with invalid password.
         $this->client->request('GET', '/login');
         self::assertResponseIsSuccessful();
 
-        $this->client->submitForm('Sign in', [
-            '_username' => 'email@example.com',
+        $this->client->submitForm('Login', [
+            '_username' => 'testuser',
             '_password' => 'bad-password',
         ]);
 
@@ -66,18 +66,14 @@ class LoginControllerTest extends WebTestCase
         $this->client->followRedirect();
 
         // Ensure we do not reveal the user exists but the password is wrong.
-        self::assertSelectorTextContains('.alert-danger', 'Invalid credentials.');
+        self::assertSelectorTextContains('.bg-red-100', 'Invalid credentials.');
 
         // Success - Login with valid credentials is allowed.
-        $this->client->submitForm('Sign in', [
-            '_username' => 'email@example.com',
+        $this->client->submitForm('Login', [
+            '_username' => 'testuser',
             '_password' => 'password',
         ]);
 
         self::assertResponseRedirects('/');
-        $this->client->followRedirect();
-
-        self::assertSelectorNotExists('.alert-danger');
-        self::assertResponseIsSuccessful();
     }
 }

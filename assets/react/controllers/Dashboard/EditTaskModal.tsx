@@ -45,7 +45,6 @@ export default function EditTaskModal({ task, isOpen, onClose, onSave, prioritie
         }
     }, [task, isOpen]);
 
-    // Handle ESC key press to close modal
     React.useEffect(() => {
         const handleEscapeKey = (event: KeyboardEvent) => {
             if (event.key === 'Escape' && isOpen) {
@@ -138,7 +137,7 @@ export default function EditTaskModal({ task, isOpen, onClose, onSave, prioritie
                                 htmlFor="title"
                                 type="small"
                                 color="default"
-                                className="font-semibold text-sm"
+                                className="font-semibold text-base"
                             >
                                 Title
                             </Typography>
@@ -147,7 +146,7 @@ export default function EditTaskModal({ task, isOpen, onClose, onSave, prioritie
                                 name="title"
                                 type="text"
                                 placeholder="Task Title..."
-                                className="text-sm"
+                                className="text-sm p-2"
                                 value={formData.title}
                                 onChange={handleInputChange}
                                 required
@@ -159,7 +158,7 @@ export default function EditTaskModal({ task, isOpen, onClose, onSave, prioritie
                                 htmlFor="description"
                                 type="small"
                                 color="default"
-                                className="font-semibold text-sm"
+                                className="font-semibold text-base"
                             >
                                 Description
                             </Typography>
@@ -168,7 +167,7 @@ export default function EditTaskModal({ task, isOpen, onClose, onSave, prioritie
                                 name="description"
                                 placeholder="Task Description..."
                                 rows={6}
-                                className="text-sm"
+                                className="text-sm p-2"
                                 value={formData.description}
                                 onChange={handleInputChange}
                             />
@@ -178,7 +177,7 @@ export default function EditTaskModal({ task, isOpen, onClose, onSave, prioritie
                                 as="label"
                                 type="small"
                                 color="default"
-                                className="font-semibold text-sm mb-2 block"
+                                className="font-semibold text-base mb-2 block"
                             >
                                 Priority
                             </Typography>
@@ -219,7 +218,7 @@ export default function EditTaskModal({ task, isOpen, onClose, onSave, prioritie
                                 htmlFor="due_date"
                                 type="small"
                                 color="default"
-                                className="font-semibold text-sm"
+                                className="font-semibold text-base"
                             >
                                 Due Date
                             </Typography>
@@ -235,7 +234,7 @@ export default function EditTaskModal({ task, isOpen, onClose, onSave, prioritie
                                             onClick={(e: React.MouseEvent) => e.preventDefault()}
                                             placeholder="Due Date"
                                             value={formData.due_date ? format(formData.due_date, "PPP") : ""}
-                                            className="text-sm"
+                                            className="text-sm p-2 cursor-pointer"
                                         />
                                     </div>
                                 </Popover.Trigger>
@@ -247,7 +246,7 @@ export default function EditTaskModal({ task, isOpen, onClose, onSave, prioritie
                                         selected={formData.due_date}
                                         onSelect={handleDateChange}
                                         showOutsideDays={false}
-                                        className="border-0"
+                                        className="border-0 p-2"
                                     />
                                 </Popover.Content>
                             </Popover>

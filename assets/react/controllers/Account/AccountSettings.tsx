@@ -355,7 +355,7 @@ export default function AccountSettings() {
                                         htmlFor="currentPassword"
                                         type="small"
                                         color="default"
-                                        className="font-semibold text-base sm:text-sm text-black dark:text-gray-50"
+                                        className="font-semibold text-base text-black dark:text-gray-50"
                                     >
                                         Current Password
                                     </Typography>
@@ -363,7 +363,7 @@ export default function AccountSettings() {
                                         id="currentPassword"
                                         type="password"
                                         placeholder="Enter your current password"
-                                        className={`text-base sm:text-sm text-black dark:text-gray-50 py-3 sm:py-2 ${
+                                        className={`text-base sm:text-sm text-black dark:text-gray-50 py-3 sm:py-2 p-2 ${
                                             errors.currentPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.currentPassword}
@@ -381,7 +381,7 @@ export default function AccountSettings() {
                                         htmlFor="newPassword"
                                         type="small"
                                         color="default"
-                                        className="font-semibold text-base sm:text-sm text-black dark:text-gray-50"
+                                        className="font-semibold text-base  text-black dark:text-gray-50"
                                     >
                                         New Password
                                     </Typography>
@@ -389,7 +389,7 @@ export default function AccountSettings() {
                                         id="newPassword"
                                         type="password"
                                         placeholder="Enter your new password"
-                                        className={`text-base sm:text-sm text-black dark:text-gray-50 py-3 sm:py-2 ${
+                                        className={`text-base sm:text-sm text-black dark:text-gray-50 py-3 sm:py-2 p-2 ${
                                             errors.newPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.newPassword}
@@ -407,7 +407,7 @@ export default function AccountSettings() {
                                         htmlFor="confirmPassword"
                                         type="small"
                                         color="default"
-                                        className="font-semibold text-base sm:text-sm text-black dark:text-gray-50"
+                                        className="font-semibold text-base text-black dark:text-gray-50"
                                     >
                                         Confirm New Password
                                     </Typography>
@@ -415,7 +415,7 @@ export default function AccountSettings() {
                                         id="confirmPassword"
                                         type="password"
                                         placeholder="Confirm your new password"
-                                        className={`text-base sm:text-sm text-black dark:text-gray-50 py-3 sm:py-2 ${
+                                        className={`text-base sm:text-sm text-black dark:text-gray-50 py-3 sm:py-2 p-2 ${
                                             errors.confirmPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.confirmPassword}
