@@ -98,27 +98,15 @@ export default function AddTaskForm(props: AddTaskFormProps) {
             "low": "Low"
         };
 
-        const formSubmitData = new FormData();
-        formSubmitData.append('title', formData.title);
-
-        if (formData.description) {
-            formSubmitData.append('description', formData.description);
-        }
-
-        formSubmitData.append('priority', priorityMap[formData.priority]);
-
-        if (formData.due_date) {
-            const dateObj = formData.due_date;
-            const year = dateObj.getFullYear();
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            formSubmitData.append('due_date', `${year}-${month}-${day}`);
-        }
-
-        formSubmitData.append('_token', props.csfr_token || "");
         fetch(props.url, {
             method: 'POST',
-            body: formSubmitData
+            body: JSON.stringify({
+                title: formData.title,
+                description: formData.description,
+                priority: priorityMap[formData.priority],
+                due_date: formData.due_date ? format(formData.due_date, "yyyy-MM-dd") : null,
+                _token: props.csfr_token || ""
+            })
         })
             .then(response => {
                 if (response.ok) {

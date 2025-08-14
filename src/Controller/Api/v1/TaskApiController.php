@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Controller\Api\v1;
 
+use App\Config\StatusMessages;
 use App\Config\Priority;
 use App\Config\Status;
 use App\Controller\BaseController;
+use App\Dto\TaskDto;
 use App\Entity\Task;
 use App\Form\AddTaskFormType;
 use App\Form\EditTaskFormType;
-use App\Model\Task as TaskModel;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,20 +31,14 @@ class TaskApiController extends BaseController
     #[Route('/api/v1/task/getTasksWithStatus', name: 'app_task_get_task_with_status', methods: ['GET'])]
     function getTaskWithStatus(EntityManagerInterface $entityManager, SerializerInterface $serializer): Response
     {
-        $user = $this->getUser();
-
-        if (!$user) {
-            return new Response('Unauthorized', Response::HTTP_UNAUTHORIZED);
-        }
-        $tasks = $entityManager->getRepository(Task::class)->findBy(['user_id' => $user->getId()]);
-
+        $tasks = $entityManager->getRepository(Task::class)->findBy(['user_id' => $this->getUser()->getId()]);
         $statusList = Status::cases();
         $tasksByStatus = [];
 
         foreach ($statusList as $status) {
             foreach ($tasks as $task) {
                 if ($task->getStatus()->value === $status->value) {
-                    $tasksByStatus[$task->getStatus()->name][] = $this->createModelFromEntity($task);
+                    $tasksByStatus[$task->getStatus()->name][] = $this->mapTaskToDto($task);
                 }
             }
             if (!array_key_exists($status->name, $tasksByStatus)) {
@@ -55,7 +49,7 @@ class TaskApiController extends BaseController
     }
 
     #[Route('/api/v1/task/delete', name: 'app_task_remove', methods: ['POST'])]
-    public function deleteTask(Request $request, EntityManagerInterface $entityManager): Response
+    public function deleteTask(Request $request, EntityManagerInterface $entityManager, AuthorizationCheckerInterface $authorizationChecker): Response
     {
         $task = $entityManager->getRepository(Task::class)->find($request->query->get('id'));
         if ($task) {
@@ -68,125 +62,107 @@ class TaskApiController extends BaseController
 
     /**
      * @throws ExceptionInterface
+     * @throws Exception
      */
-    #[Route('/api/v1/task/update_status', name: 'app_task_status_update', methods: ['POST'])]
-    public function updateStatus(Request $request ,EntityManagerInterface $entityManager, AuthorizationCheckerInterface $authorizationChecker): Response
+    #[Route('/api/v1/task/updateStatus', name: 'app_task_status_update', methods: ['POST'])]
+    public function updateStatus(Request $request, EntityManagerInterface $entityManager, AuthorizationCheckerInterface $authorizationChecker): Response
     {
-
-        if (!$authorizationChecker->isGranted('ROLE_USER')) {
-            return BaseController::createResponse('Access denied', Response::HTTP_FORBIDDEN);
-        }
-
-        $requestContent = json_decode($request->getContent());
-
-        if (!$requestContent || !isset($requestContent->task_id) || !isset($requestContent->status)) {
-            return new Response('Invalid request data', Response::HTTP_BAD_REQUEST);
-        }
-
-        $task = $entityManager->getRepository(Task::class)->find($requestContent->task_id);
-        $status = Status::tryFrom($this->mapStatusToInt($requestContent->status));
-
+        $taskDto = $this->mapRequestToTaskDto($request);
+        $task = $entityManager->getRepository(Task::class)->find($taskDto->getId());
         if (!$task) {
-            throw $this->createNotFoundException('Task not found');
+            return BaseController::createResponse(StatusMessages::TaskNotFound, Response::HTTP_NOT_FOUND);
         }
 
-        if ($task->getUserId() != $this->getUser()) {
-            return BaseController::createResponse('Access denied', Response::HTTP_FORBIDDEN);
+        if ($task->getUserId() !== $this->getUser()->getId()) {
+            return BaseController::createResponse(StatusMessages::Forbidden, Response::HTTP_FORBIDDEN);
+        }
+
+        $status = Status::tryFrom($this->mapStatusToInt($taskDto->getStatus()));
+        if (!$status) {
+            return BaseController::createResponse(StatusMessages::TaskInvalidStatus, Response::HTTP_BAD_REQUEST);
         }
 
         if ($task->getStatus() !== $status) {
             if ($status === Status::Done) {
                 $task->setCompletedAt(new DateTimeImmutable());
             }
-
             $task->setStatus($status);
             $task->setUpdatedAt(new DateTime());
+
+            $entityManager->flush();
+
+            return BaseController::createResponse(StatusMessages::TaskUpdated, Response::HTTP_OK);
+        }
+
+        return BaseController::createResponse(StatusMessages::TaskStatusNotChanged, Response::HTTP_NOT_MODIFIED);
+    }
+
+    #[Route('/api/v1/task/addTask', name: 'app_task_addtask', methods: ['POST'])]
+    public function addTask(Request $request, EntityManagerInterface $entityManager, AuthorizationCheckerInterface $authorizationChecker): Response
+    {
+        try {
+            $taskDto = $this->mapRequestToTaskDto($request);
+
+            $requestData = $request->getPayload()->all();
+            $requestData['priority'] = Priority::tryFrom($requestData['priority']);
+
+            $form = $this->createForm(AddTaskFormType::class);
+            $form->submit($requestData);
+
+            if (!$form->isValid()) {
+                return BaseController::createResponse(StatusMessages::TaskInvalidData, Response::HTTP_BAD_REQUEST);
+            }
+
+            $task = new Task();
+            $task->setTitle($taskDto->getTitle());
+            $task->setDescription($taskDto->getDescription());
+            $task->setPriority(Priority::tryFrom($taskDto->getPriority()));
+            $task->setDueDate($taskDto->getDueDate());
+            $task->setCreatedAt(new DateTimeImmutable());
+            $task->setUpdatedAt(new DateTime());
+            $task->setStatus(Status::Open);
+            $task->setUserId($this->getUser());
 
             $entityManager->persist($task);
             $entityManager->flush();
 
-            return BaseController::createResponse('Task updated successfully');
-        }
-
-        return BaseController::createResponse('Task status is already ' . $status->name, Response::HTTP_NOT_MODIFIED);
-    }
-
-    #[Route('/api/v1/task/addTask', name: 'app_task_addtask', methods: ['POST'])]
-    public function addTask(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        try {
-            $task = new Task();
-            $requestData = $request->request->all();
-
-            if ($requestData['priority'] !== null) {
-                $requestData['priority'] = Priority::tryFrom($requestData['priority']);
-            }
-
-            $addTaskForm = $this->createForm(AddTaskFormType::class, $task)->handleRequest($request);
-            $addTaskForm->submit($requestData);
-
-            if ($addTaskForm->isSubmitted() && $addTaskForm->isValid()) {
-                $task->setTitle($addTaskForm->get('title')->getData());
-                $task->setDescription($addTaskForm->get('description')->getData());
-                $task->setPriority($addTaskForm->get('priority')->getData());
-                $task->setDueDate($addTaskForm->get('due_date')->getData());
-
-                $task->setCreatedAt(new DateTimeImmutable());
-                $task->setUpdatedAt(new DateTime());
-                $task->setStatus(Status::Open);
-
-                $task->setUserId($this->getUser());
-
-                $entityManager->persist($task);
-                $entityManager->flush();
-            }
-            return BaseController::createResponse('Task added successfully');
-        } catch (Exception $e) {
-            return BaseController::createResponse($e->getMessage(), $e->getCode());
+            return BaseController::createResponse(StatusMessages::TaskCreated, Response::HTTP_CREATED);
+        } catch (Exception $exception) {
+            return BaseController::createResponse(StatusMessages::TaskCreateFailed, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     #[Route('/api/v1/task/editTask', name: 'app_task_edittask', methods: ['POST'])]
-    public function editTask(Request $request, EntityManagerInterface $entityManager): Response
+    public function editTask(Request $request, EntityManagerInterface $entityManager, AuthorizationCheckerInterface $authorizationChecker): Response
     {
         try {
-            $requestData = $request->request->all();
+            $taskDto = $this->mapRequestToTaskDto($request);
 
-            if (!isset($requestData['id'])) {
-                return BaseController::createResponse('Task ID is required', Response::HTTP_BAD_REQUEST);
-            }
-
-            $task = $entityManager->getRepository(Task::class)->find($requestData['id']);
-
+            $task = $entityManager->getRepository(Task::class)->find($taskDto->getId());
             if (!$task) {
-                return BaseController::createResponse('Task not found', Response::HTTP_NOT_FOUND);
+                return BaseController::createResponse(StatusMessages::TaskNotFound, Response::HTTP_NOT_FOUND);
             }
 
             if ($task->getUserId() !== $this->getUser()) {
-                return BaseController::createResponse('Access denied', Response::HTTP_FORBIDDEN);
+                return BaseController::createResponse(StatusMessages::Forbidden, Response::HTTP_FORBIDDEN);
             }
 
-            if ($requestData['priority'] !== null && $requestData['priority'] !== '') {
-                $requestData['priority'] = Priority::tryFrom($requestData['priority']);
+            $form = $this->createForm(EditTaskFormType::class, $task);
+            $form->submit($request->getPayload()->all());
+
+            if (!$form->isValid()) {
+                return BaseController::createResponse(StatusMessages::TaskInvalidData, Response::HTTP_BAD_REQUEST);
             }
 
-            $editTaskForm = $this->createForm(EditTaskFormType::class, $task)->handleRequest($request);
-            $editTaskForm->submit($requestData);
+            $task->setTitle($taskDto->getTitle());
+            $task->setDescription($taskDto->getDescription());
+            $task->setPriority(Priority::tryFrom($taskDto->getPriority()));
+            $task->setDueDate($taskDto->getDueDate());
+            $task->setUpdatedAt(new DateTime());
 
-            if ($editTaskForm->isSubmitted() && $editTaskForm->isValid()) {
-                $task->setTitle($editTaskForm->get('title')->getData());
-                $task->setDescription($editTaskForm->get('description')->getData());
-                $task->setPriority($editTaskForm->get('priority')->getData());
-                $task->setDueDate($editTaskForm->get('due_date')->getData());
+            $entityManager->flush();
 
-                $task->setUpdatedAt(new DateTime());
-
-                $entityManager->flush();
-
-                return BaseController::createResponse('Task updated successfully');
-            }
-
-            return BaseController::createResponse('Invalid form data', Response::HTTP_BAD_REQUEST);
+            return BaseController::createResponse(StatusMessages::TaskUpdated, Response::HTTP_OK);
         } catch (Exception $e) {
             return BaseController::createResponse($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -202,9 +178,9 @@ class TaskApiController extends BaseController
         return false;
     }
 
-    private function createModelFromEntity(Task $task): TaskModel
+    private function mapTaskToDto(Task $task): TaskDto
     {
-        return new TaskModel(
+        return new TaskDto(
             $task->getId(),
             $task->getTitle(),
             $task->getDescription(),
@@ -213,5 +189,22 @@ class TaskApiController extends BaseController
             $task->getDueDate(),
             $task->getCreatedAt(),
             $task->getUpdatedAt());
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function mapRequestToTaskDto(Request $request): TaskDto
+    {
+        return new TaskDto(
+            $request->getPayload()->get('task_id', 0),
+            $request->getPayload()->get('title', ''),
+            $request->getPayload()->get('description', ''),
+            $request->getPayload()->get('status', Status::Open->name),
+            $request->getPayload()->get('priority', Priority::MediumPriority->value),
+            $request->getPayload()->get('due_date') !== null ? new \DateTime($request->getPayload()->get('due_date')) : null,
+            new \DateTimeImmutable(), // createdAt ggf. aus Request oder jetzt setzen
+            new \DateTime()           // updatedAt ggf. aus Request oder jetzt setzen
+        );
     }
 }

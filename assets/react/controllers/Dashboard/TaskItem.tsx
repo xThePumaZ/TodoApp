@@ -75,7 +75,7 @@ export default function TaskItem({ task, csfr_token }) {
 
             if (newStatus && newStatus !== currentStatus) {
                 // Update task status via API
-                fetch(`/api/v1/task/update_status`, {
+                fetch(`/api/v1/task/updateStatus`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -132,17 +132,16 @@ export default function TaskItem({ task, csfr_token }) {
     };
 
     const handleEditSave = (taskData: { id: string | Blob; title: string | Blob; description: string; due_date: any; priority: string; csfr_token}) => {
-        const formData = new FormData();
-        formData.append('id', taskData.id);
-        formData.append('title', taskData.title);
-        formData.append('description', taskData.description || '');
-        formData.append('due_date', taskData.due_date || '');
-        formData.append('priority', taskData.priority || '');
-        formData.append('_token', taskData.csfr_token || csfr_token);
-
         fetch('/api/v1/task/editTask', {
             method: 'POST',
-            body: formData
+            body:  JSON.stringify({
+                task_id: taskData.id,
+                title: taskData.title,
+                description: taskData.description || '',
+                due_date: taskData.due_date || '',
+                priority: taskData.priority || '',
+                csfr_token: taskData.csfr_token || csfr_token
+            })
         })
         .then(response => {
             if (response.ok) {

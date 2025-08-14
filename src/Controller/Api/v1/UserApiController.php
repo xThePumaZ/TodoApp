@@ -20,8 +20,6 @@ class UserApiController extends BaseController
     #[Route('/api/v1/user/change_picture', name: 'app_account_change_picture')]
     public function changePicture(Request $request, EntityManagerInterface $entityManager, AuthorizationCheckerInterface $authorizationChecker): Response
     {
-        if (!BaseController::isAuthorized($authorizationChecker, 'ROLE_USER')) return BaseController::createResponse('Unauthorized', Response::HTTP_UNAUTHORIZED);
-
         if (!$request->files->has('profileImage')) {
             return BaseController::createResponse('No profile image provided.', Response::HTTP_BAD_REQUEST);
         }
@@ -37,8 +35,6 @@ class UserApiController extends BaseController
     #[Route('/api/v1/user/loadProfilePicture', name: 'app_account_load_profile_picture')]
     public function loadProfilePicture(EntityManagerInterface $entityManager, AuthorizationCheckerInterface $authorizationChecker, ProfilePictureService $pictureService): Response
     {
-        if (!BaseController::isAuthorized($authorizationChecker, 'ROLE_USER')) return BaseController::createResponse('Unauthorized', Response::HTTP_UNAUTHORIZED);
-
         if ($this->getUser()) {
             $user = $entityManager->getRepository(User::class)->find($this->getUser()->getId());
             $profilePicture = $user->getProfilePicture();
@@ -59,8 +55,6 @@ class UserApiController extends BaseController
     #[Route('/api/v1/user/changePassword', name: 'app_account_change_password')]
     public function changePassword(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $userPasswordHasher, AuthorizationCheckerInterface $authorizationChecker): Response
     {
-        if (!BaseController::isAuthorized($authorizationChecker, 'ROLE_USER')) return BaseController::createResponse('Unauthorized', Response::HTTP_UNAUTHORIZED);
-
         if (!$request->request->has('currentPassword') || !$request->request->has('newPassword')) {
             return BaseController::createResponse('No current password provided.', Response::HTTP_BAD_REQUEST);
         }

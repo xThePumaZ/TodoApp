@@ -1,10 +1,8 @@
 <?php
 
-namespace App\Model;
+namespace App\Dto;
 
-use Symfony\Component\Validator\Constraints\DateTime;
-
-class Task
+class TaskDto
 {
     private string $description;
     private string $status;

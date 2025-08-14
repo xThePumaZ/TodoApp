@@ -24,7 +24,7 @@ export default function TaskColumn({ status, tasks, csfr_token }) {
                     const taskId = sourceData.taskId || source.element.getAttribute('data-task-id');
 
                     if (status !== sourceStatus) {
-                        fetch(`/api/v1/task/update_status`, {
+                        fetch(`/api/v1/task/updateStatus`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
