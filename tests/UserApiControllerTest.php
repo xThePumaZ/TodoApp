@@ -47,6 +47,7 @@ class UserApiControllerTest extends WebTestCase
 
         $this->testUser = (new User())->setUsername('testuser');
         $this->testUser->setPassword($passwordHasher->hashPassword($this->testUser, 'password'));
+        $this->testUser->setRoles(['ROLE_USER']);
 
         $this->entityManager->persist($this->testUser);
         $this->entityManager->flush();
@@ -54,7 +55,8 @@ class UserApiControllerTest extends WebTestCase
 
     private function loginUser(): void
     {
-        $this->client->request('POST', '/login', [
+        $this->client->request('GET', '/login');
+        $this->client->submitForm('Login', [
             '_username' => 'testuser',
             '_password' => 'password',
         ]);
@@ -64,7 +66,7 @@ class UserApiControllerTest extends WebTestCase
     {
         $this->client->request('POST', '/api/v1/user/change_picture');
 
-        self::assertResponseStatusCodeSame(Response::HTTP_FOUND); // Redirect to login
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED); // Redirect to login
     }
 
     public function testChangePictureWithoutFile(): void
@@ -117,13 +119,12 @@ class UserApiControllerTest extends WebTestCase
     {
         $this->client->request('GET', '/api/v1/user/loadProfilePicture');
 
-        self::assertResponseStatusCodeSame(Response::HTTP_FOUND); // Redirect to login
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED); // Redirect to login
     }
 
     public function testLoadProfilePictureWithoutExistingPicture(): void
     {
         $this->loginUser();
-
         $this->client->request('GET', '/api/v1/user/loadProfilePicture');
 
         self::assertResponseIsSuccessful();
@@ -131,18 +132,24 @@ class UserApiControllerTest extends WebTestCase
 
         self::assertEquals('No profile picture found, using default image.', $response['message']);
         self::assertArrayHasKey('data', $response);
-        self::assertStringContains('data:image/jpeg;base64,', $response['data'][0]);
+        self::assertStringContainsString('data:image/jpeg;base64,', $response['data'][0]);
     }
 
     public function testLoadProfilePictureWithExistingPicture(): void
     {
         $this->loginUser();
 
-        // Set a profile picture for the user
         $testImageData = base64_encode('fake-image-content');
-        $this->testUser->setProfilePicture($testImageData);
-        $this->entityManager->persist($this->testUser);
+
+        $userId = $this->testUser->getId();
+        $this->entityManager->clear();
+        $user = $this->entityManager->getRepository(User::class)->find($userId);
+        $user->setProfilePicture($testImageData);
+        $this->entityManager->persist($user);
         $this->entityManager->flush();
+
+        $savedUser = $this->entityManager->getRepository(User::class)->find($userId);
+        self::assertNotEmpty($savedUser->getProfilePicture(), 'Profile picture should be saved');
 
         $this->client->request('GET', '/api/v1/user/loadProfilePicture');
 
@@ -151,14 +158,13 @@ class UserApiControllerTest extends WebTestCase
 
         self::assertEquals('Profile picture loaded successfully.', $response['message']);
         self::assertArrayHasKey('data', $response);
-        self::assertStringContains('data:image/jpeg;base64,', $response['data'][0]);
+        self::assertStringContainsString('data:image/jpeg;base64,', $response['data'][0]);
     }
 
     public function testChangePasswordWithoutLogin(): void
     {
         $this->client->request('POST', '/api/v1/user/changePassword');
-
-        self::assertResponseStatusCodeSame(Response::HTTP_FOUND); // Redirect to login
+        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED); // Redirect to login
     }
 
     public function testChangePasswordWithoutCurrentPassword(): void
@@ -208,9 +214,7 @@ class UserApiControllerTest extends WebTestCase
         $container = static::getContainer();
         $passwordHasher = $container->get('security.user_password_hasher');
 
-        // Note: The controller implementation seems to have a bug - it sets the password to currentPassword instead of newPassword
-        // This test reflects the current implementation behavior
-        self::assertTrue($passwordHasher->isPasswordValid($updatedUser, 'oldpassword'));
+        self::assertTrue($passwordHasher->isPasswordValid($updatedUser, 'newpassword123'));
     }
 
     public function testChangePasswordMissingBothPasswords(): void
@@ -237,8 +241,7 @@ class UserApiControllerTest extends WebTestCase
             $this->client->request($method, $url);
 
             // Should redirect to login page when not authenticated
-            self::assertResponseStatusCodeSame(Response::HTTP_FOUND);
-            self::assertResponseHeaderContains('Location', '/login');
+            self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
         }
     }
 

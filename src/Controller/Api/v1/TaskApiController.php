@@ -19,63 +19,18 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
 class TaskApiController extends BaseController
 {
-
-    #[Route('/api/v1/task/getTasksStatus', name: 'app_task_get_status', methods: ['GET'])]
-    public function getTasksStatus(): JsonResponse|Response
-    {
-        $user = $this->getUser();
-        if (!$user) {
-            return new Response('Unauthorized', Response::HTTP_UNAUTHORIZED);
-        }
-
-        $statusList = Status::cases();
-        $statuses = [];
-
-        foreach ($statusList as $status) {
-            $statuses[] = $status->name;
-        }
-
-        return $this->json(
-            [
-                'data' => $statuses,
-                'message' => 'Statuses retrieved successfully',
-            ],
-            Response::HTTP_OK
-        );
-
-    }
-
-    #[Route('/api/v1/task/getAllTasks', name: 'app_task_get', methods: ['GET'])]
-    public function getTasks(EntityManagerInterface $entityManager, SerializerInterface $serializer): JsonResponse|Response
-    {
-        $taskReturn = [];
-        $user = $this->getUser();
-
-        if (!$user) {
-            return new Response('Unauthorized', Response::HTTP_UNAUTHORIZED);
-        }
-
-        $tasks = $entityManager->getRepository(Task::class)->findBy(['user_id' => $user->getId(), 'status' => [Status::Open, Status::InProgress]]);
-
-        foreach ($tasks as $task) {
-            $taskReturn[] = $this->createModelFromEntity($task);
-        }
-
-        return BaseController::createResponse('Tasks retrieved successfully', Response::HTTP_OK, $taskReturn);
-    }
-
     /**
      * @throws ExceptionInterface
      */
     #[Route('/api/v1/task/getTasksWithStatus', name: 'app_task_get_task_with_status', methods: ['GET'])]
     function getTaskWithStatus(EntityManagerInterface $entityManager, SerializerInterface $serializer): Response
     {
-
         $user = $this->getUser();
 
         if (!$user) {
@@ -100,10 +55,8 @@ class TaskApiController extends BaseController
     }
 
     #[Route('/api/v1/task/delete', name: 'app_task_remove', methods: ['POST'])]
-    public function deleteTask(EntityManagerInterface $entityManager): Response
+    public function deleteTask(Request $request, EntityManagerInterface $entityManager): Response
     {
-        $request = Request::createFromGlobals();
-
         $task = $entityManager->getRepository(Task::class)->find($request->query->get('id'));
         if ($task) {
             $entityManager->remove($task);
@@ -117,9 +70,13 @@ class TaskApiController extends BaseController
      * @throws ExceptionInterface
      */
     #[Route('/api/v1/task/update_status', name: 'app_task_status_update', methods: ['POST'])]
-    public function updateStatus(EntityManagerInterface $entityManager, SerializerInterface $serializer): Response
+    public function updateStatus(Request $request ,EntityManagerInterface $entityManager, AuthorizationCheckerInterface $authorizationChecker): Response
     {
-        $request = Request::createFromGlobals();
+
+        if (!$authorizationChecker->isGranted('ROLE_USER')) {
+            return BaseController::createResponse('Access denied', Response::HTTP_FORBIDDEN);
+        }
+
         $requestContent = json_decode($request->getContent());
 
         if (!$requestContent || !isset($requestContent->task_id) || !isset($requestContent->status)) {
@@ -133,6 +90,10 @@ class TaskApiController extends BaseController
             throw $this->createNotFoundException('Task not found');
         }
 
+        if ($task->getUserId() != $this->getUser()) {
+            return BaseController::createResponse('Access denied', Response::HTTP_FORBIDDEN);
+        }
+
         if ($task->getStatus() !== $status) {
             if ($status === Status::Done) {
                 $task->setCompletedAt(new DateTimeImmutable());
@@ -141,6 +102,7 @@ class TaskApiController extends BaseController
             $task->setStatus($status);
             $task->setUpdatedAt(new DateTime());
 
+            $entityManager->persist($task);
             $entityManager->flush();
 
             return BaseController::createResponse('Task updated successfully');

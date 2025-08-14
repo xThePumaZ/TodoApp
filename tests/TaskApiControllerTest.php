@@ -68,57 +68,6 @@ class TaskApiControllerTest extends WebTestCase
         ]);
     }
 
-    public function testGetTasksStatusUnauthorized(): void
-    {
-        $this->client->request('GET', '/api/v1/task/getTasksStatus');
-
-        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
-    }
-
-    public function testGetTasksStatusAuthorized(): void
-    {
-        $this->loginUser();
-
-        $this->client->request('GET', '/api/v1/task/getTasksStatus');
-
-        self::assertResponseIsSuccessful();
-        $response = json_decode($this->client->getResponse()->getContent(), true);
-
-        self::assertArrayHasKey('data', $response);
-        self::assertArrayHasKey('message', $response);
-        self::assertEquals('Statuses retrieved successfully', $response['message']);
-        self::assertIsArray($response['data']);
-        self::assertContains('Open', $response['data']);
-        self::assertContains('InProgress', $response['data']);
-        self::assertContains('Done', $response['data']);
-    }
-
-    public function testGetAllTasksUnauthorized(): void
-    {
-        $this->client->request('GET', '/api/v1/task/getAllTasks');
-
-        self::assertResponseStatusCodeSame(Response::HTTP_UNAUTHORIZED);
-    }
-
-    public function testGetAllTasksAuthorized(): void
-    {
-        $this->loginUser();
-
-        // Create test tasks
-        $this->createTestTasks();
-
-        $this->client->request('GET', '/api/v1/task/getAllTasks');
-
-        self::assertResponseIsSuccessful();
-        $response = json_decode($this->client->getResponse()->getContent(), true);
-
-        self::assertArrayHasKey('data', $response);
-        self::assertArrayHasKey('message', $response);
-        self::assertEquals('Tasks retrieved successfully', $response['message']);
-        self::assertIsArray($response['data']);
-        // Should only return Open and InProgress tasks
-        self::assertCount(2, $response['data']);
-    }
 
     public function testGetTasksWithStatusUnauthorized(): void
     {

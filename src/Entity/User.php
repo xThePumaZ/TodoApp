@@ -45,7 +45,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Task::class, mappedBy: 'user_id')]
     private Collection $tasks;
 
-    #[ORM\Column(type: Types::BINARY, nullable: true)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     private $profilePicture = null;
 
     public function __construct()

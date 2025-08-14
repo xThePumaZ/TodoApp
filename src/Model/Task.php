@@ -9,7 +9,7 @@ class Task
     private string $description;
     private string $status;
     private string $priority;
-    private \DateTime $dueDate;
+    private \DateTime|null $dueDate;
     private \DateTimeImmutable $createdAt;
     private \DateTime $updatedAt;
 
@@ -104,11 +104,11 @@ class Task
      * @param string $description
      * @param string $status
      * @param string $priority
-     * @param DateTime $dueDate
+     * @param \DateTime|null $dueDate
      * @param \DateTimeImmutable $createdAt
      * @param \DateTime $updatedAt
      */
-    public function __construct(int $id, string $title, string $description, string $status, string $priority, \DateTime $dueDate, \DateTimeImmutable $createdAt, \DateTime $updatedAt)
+    public function __construct(int $id, string $title, string $description, string $status, string $priority, \DateTime|null $dueDate, \DateTimeImmutable $createdAt, \DateTime $updatedAt)
     {
         $this->id = $id;
         $this->title = $title;
