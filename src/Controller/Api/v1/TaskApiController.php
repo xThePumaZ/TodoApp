@@ -82,7 +82,7 @@ class TaskApiController extends BaseController
             return BaseController::createResponse(StatusMessages::TaskNotFound, Response::HTTP_NOT_FOUND);
         }
 
-        if ($task->getUserId() !== $this->getUser()->getId()) {
+        if ($task->getUserId()->getId() !== $this->getUser()->getId()) {
             return BaseController::createResponse(StatusMessages::Forbidden, Response::HTTP_FORBIDDEN);
         }
 

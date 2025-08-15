@@ -105,7 +105,7 @@ class TaskApiControllerTest extends WebTestCase
         $task = $this->createSingleTestTask();
 
         $this->client->request('POST', '/api/v1/task/update_status', [], [], [], json_encode([
-            'task_id' => $task->getId(),
+            'id' => $task->getId(),
             'status' => 'InProgress'
         ]));
 

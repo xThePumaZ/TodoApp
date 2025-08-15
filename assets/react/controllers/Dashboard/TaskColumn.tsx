@@ -30,7 +30,7 @@ export default function TaskColumn({ status, tasks, csfr_token }) {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
-                                task_id: taskId,
+                                id: taskId,
                                 status: status,
                             }),
                         }).then(r => {
