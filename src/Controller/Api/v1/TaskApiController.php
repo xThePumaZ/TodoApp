@@ -158,6 +158,8 @@ class TaskApiController extends BaseController
     {
         try {
             $taskDto = $this->mapRequestToTaskDto($request);
+            $requestData = $request->getPayload()->all();
+            $requestData['priority'] = Priority::tryFrom($requestData['priority']);
 
             $task = $entityManager->getRepository(Task::class)->find($taskDto->getId());
             if (!$task) {
@@ -169,7 +171,7 @@ class TaskApiController extends BaseController
             }
 
             $form = $this->createForm(EditTaskFormType::class, $task);
-            $form->submit($request->getPayload()->all());
+            $form->submit($requestData);
 
             if (!$form->isValid()) {
                 return BaseController::createResponse(StatusMessages::TaskInvalidData, Response::HTTP_BAD_REQUEST);
@@ -226,7 +228,7 @@ class TaskApiController extends BaseController
     private function mapRequestToTaskDto(Request $request): TaskDto
     {
         return new TaskDto(
-            $request->getPayload()->get('task_id', 0),
+            $request->getPayload()->get('id', 0),
             $request->getPayload()->get('title', ''),
             $request->getPayload()->get('description', ''),
             $request->getPayload()->get('status', Status::Open->name),

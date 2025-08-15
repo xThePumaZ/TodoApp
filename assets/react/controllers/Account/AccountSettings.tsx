@@ -10,6 +10,8 @@ import {
     Avatar,
 } from "@material-tailwind/react";
 import {UserCircle, Camera, Key, SelectFace3d, Settings, ProfileCircle} from "iconoir-react";
+import { apiService, ApiError } from "../../services/apiService";
+import { useAccountSettings } from "../../hooks/useAccountSettings";
 
 
 // Define types for our state
@@ -26,160 +28,105 @@ interface ErrorState {
 }
 
 
-function useUserAvatar() {
+// Custom hook for profile picture management
+function useProfilePicture() {
     const [profilePicture, setProfilePicture] = React.useState("");
     const [isLoading, setIsLoading] = React.useState(true);
+    const [imageFile, setImageFile] = React.useState<File | null>(null);
+    const [isUploading, setIsUploading] = React.useState(false);
 
     React.useEffect(() => {
-        setIsLoading(true);
-        fetch('/api/v1/user/loadProfilePicture', {
-            method: 'GET'
-        })
-            .then(async response => {
-                if (response.status !== 200) {
-                    const data = await response.json();
-                    console.error("Failed to get profile image:", data.message);
-                    throw new Error(data.message || 'Failed to get profile image');
-                }
-                return response.json();
-            })
-            .then(data => {
-                setProfilePicture(data.data[0]);
-                setIsLoading(false);
-            })
+        loadProfilePicture();
     }, []);
 
-    return { profilePicture, isLoading, setProfilePicture };
+    const loadProfilePicture = async () => {
+        try {
+            setIsLoading(true);
+            const response = await apiService.loadProfilePicture();
+            setProfilePicture(response.data[0]);
+        } catch (error) {
+            console.error("Failed to load profile picture:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleImageChange = (file: File) => {
+        setImageFile(file);
+
+        // Create a preview of the image
+        const reader = new FileReader();
+        reader.onload = (event: ProgressEvent<FileReader>) => {
+            if (event.target && event.target.result) {
+                setProfilePicture(event.target.result as string);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const uploadProfilePicture = async (): Promise<{ success: boolean; message: string }> => {
+        if (!imageFile) {
+            return { success: false, message: "No image file selected" };
+        }
+
+        try {
+            setIsUploading(true);
+            const formData = new FormData();
+            formData.append('profileImage', imageFile);
+
+            const response = await apiService.changeProfilePicture(formData);
+            setImageFile(null);
+
+            return { success: true, message: response.message || "Profile picture updated successfully!" };
+        } catch (error) {
+            const errorMessage = error instanceof ApiError ? error.message : 'An error occurred while uploading the profile image';
+            return { success: false, message: errorMessage };
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    return {
+        profilePicture,
+        isLoading,
+        imageFile,
+        isUploading,
+        handleImageChange,
+        uploadProfilePicture,
+    };
 }
 
-export default function AccountSettings() {
-    const [activeTab, setActiveTab] = React.useState<string>("profile");
-    const { profilePicture, isLoading, setProfilePicture} = useUserAvatar();
-
-    const [imageFile, setImageFile] = React.useState<File | null>(null);
-    const fileInputRef = React.useRef<HTMLInputElement | null>(null);
-
-    const [successMessage, setSuccessMessage] = React.useState<string>("");
-    const [errorMessage, setErrorMessage] = React.useState<string>("");
-
-    React.useEffect(() => {
-        // Check if URL has a tab parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab');
-
-        // Set active tab if valid
-        if (tabParam === 'password') {
-            setActiveTab('password');
-        }
-    }, []);
-
-
-
-    // State for password change
+// Custom hook for password management
+function usePasswordChange(csrfToken: string) {
     const [passwordData, setPasswordData] = React.useState<PasswordData>({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
     });
 
-    // State for validation errors
     const [errors, setErrors] = React.useState<ErrorState>({
         currentPassword: null,
         newPassword: null,
         confirmPassword: null,
     });
 
-    // Handle profile image change
-    const handleImageClick = (): void => {
-        if (fileInputRef.current) {
-            fileInputRef.current.click();
-        }
-    };
+    const [isChanging, setIsChanging] = React.useState(false);
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setImageFile(file);
-
-            // Create a preview of the image
-            const reader = new FileReader();
-            reader.onload = (event: ProgressEvent<FileReader>): void => {
-                if (event.target && event.target.result) {
-                    setProfilePicture(event.target.result as string);
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    // Handle profile image save
-    const handleProfileImageSave = (): void => {
-        if (!imageFile) {
-            return;
-        }
-
-        // Create form data for the image upload
-        const formData = new FormData();
-        formData.append('profileImage', imageFile);
-
-        console.log(formData);
-
-        // Send the image to the server
-        fetch('/api/v1/user/change_picture', {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: formData,
-        })
-            .then(async response => {
-                if (response.status !== 200) {
-                    const data = await response.json();
-                    setErrorMessage(data.message || 'Failed to upload profile image');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Show success message
-                setSuccessMessage(data.message || "Profile picture updated successfully!");
-
-
-                // Reset the image file state since it's been uploaded
-                setImageFile(null);
-
-                // Clear success message after 3 seconds
-                setTimeout(() => {
-                    setSuccessMessage("");
-                }, 3000);
-            })
-            .catch(error => {
-                // Show error message
-                setErrorMessage(error.message || 'An error occurred while uploading the profile image');
-                // Clear error message after 3 seconds
-                setTimeout(() => {
-                    setSuccessMessage("");
-                }, 3000);
-            });
-    };
-
-    // Handle password input changes
-    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-        const {id, value} = e.target;
-        setPasswordData({
-            ...passwordData,
-            [id]: value,
-        });
+    const handlePasswordChange = (field: keyof PasswordData, value: string) => {
+        setPasswordData(prev => ({
+            ...prev,
+            [field]: value,
+        }));
 
         // Clear error when user types
-        if (errors[id]) {
-            setErrors({
-                ...errors,
-                [id]: null,
-            });
+        if (errors[field]) {
+            setErrors(prev => ({
+                ...prev,
+                [field]: null,
+            }));
         }
     };
 
-    // Validate password form
     const validatePasswordForm = (): boolean => {
         const newErrors: ErrorState = {
             currentPassword: null,
@@ -204,62 +151,90 @@ export default function AccountSettings() {
         }
 
         setErrors(newErrors);
-        // Check if there are any error messages
         return !Object.values(newErrors).some(error => error !== null);
     };
 
-    // Handle password form submission
-    const handlePasswordSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
-        e.preventDefault();
-
+    const changePassword = async (): Promise<{ success: boolean; message: string }> => {
         if (!validatePasswordForm()) {
-            return;
+            return { success: false, message: "Please fix the validation errors" };
         }
 
-        // Send password change request to the server
-        fetch('/api/user/changePassword', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify({
-                currentPassword: passwordData.currentPassword,
-                newPassword: passwordData.newPassword,
-            }),
-        })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.message || 'Failed to change password');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Reset form
-                setPasswordData({
-                    currentPassword: "",
-                    newPassword: "",
-                    confirmPassword: "",
-                });
+        try {
+            setIsChanging(true);
+            const response = await apiService.changePassword(
+                passwordData.currentPassword,
+                passwordData.newPassword,
+                passwordData.confirmPassword,
+                csrfToken
+            );
 
-                // Show success message
-                setSuccessMessage(data.message || "Password changed successfully!");
-
-                // Clear success message after 3 seconds
-                setTimeout(() => {
-                    setSuccessMessage("");
-                }, 3000);
-            })
-            .catch(error => {
-                // Show error message
-                setErrors({
-                    ...errors,
-                    currentPassword: error.message,
-                });
+            // Reset form on success
+            setPasswordData({
+                currentPassword: "",
+                newPassword: "",
+                confirmPassword: "",
             });
+
+            return { success: true, message: response.message || "Password changed successfully!" };
+        } catch (error) {
+            const errorMessage = error instanceof ApiError ? error.message : 'Failed to change password';
+
+            // Set error on current password field for API errors
+            setErrors(prev => ({
+                ...prev,
+                currentPassword: errorMessage,
+            }));
+
+            return { success: false, message: errorMessage };
+        } finally {
+            setIsChanging(false);
+        }
     };
+
+    return {
+        passwordData,
+        errors,
+        isChanging,
+        handlePasswordChange,
+        changePassword,
+    };
+}
+
+interface AccountSettingsProps {
+    csfr_token: string;
+}
+
+export default function AccountSettings({ csfr_token }: AccountSettingsProps) {
+    const {
+        profilePicture,
+        isLoading,
+        imageFile,
+        isUploading,
+        handleImageChange,
+        uploadProfilePicture
+    } = useProfilePicture();
+
+    const {
+        passwordData,
+        errors,
+        isChanging,
+        handlePasswordChange,
+        changePassword,
+    } = usePasswordChange(csfr_token);
+
+    const {
+        activeTab,
+        setActiveTab,
+        successMessage,
+        errorMessage,
+        fileInputRef,
+        handleImageClick,
+        handleFileInputChange,
+        handleProfileImageSave,
+        handlePasswordInputChange,
+        handlePasswordSubmit,
+    } = useAccountSettings();
+
 
     return (
         <Card className="w-full shadow-none bg-gray-100 dark:bg-gray-500">
@@ -314,7 +289,7 @@ export default function AccountSettings() {
                                         ref={fileInputRef}
                                         className="hidden"
                                         accept="image/*"
-                                        onChange={handleImageChange}
+                                        onChange={(e) => handleFileInputChange(e, handleImageChange)}
                                     />
                                 </div>
                                 <Typography variant="h6" className="mb-2 sm:mb-1 text-black dark:text-gray-50 text-lg sm:text-xl text-center">
@@ -327,9 +302,9 @@ export default function AccountSettings() {
                             <div className="flex justify-center">
                                 <Button
                                     className="mt-4 bg-blue-400 text-white hover:bg-blue-600 focus:bg-blue-600 active:bg-blue-700 dark:text-white py-3 px-6 sm:py-2 sm:px-4 text-base sm:text-sm"
-                                    disabled={!imageFile}
-                                    onClick={handleProfileImageSave}>
-                                    Save Changes
+                                    disabled={!imageFile || isUploading}
+                                    onClick={() => handleProfileImageSave(uploadProfilePicture)}>
+                                    {isUploading ? "Uploading..." : "Save Changes"}
                                 </Button>
                             </div>
                         </CardBody>
@@ -348,7 +323,7 @@ export default function AccountSettings() {
                                     {successMessage}
                                 </div>
                             )}
-                            <form onSubmit={handlePasswordSubmit} className="space-y-5 sm:space-y-4">
+                            <form onSubmit={(e) => handlePasswordSubmit(e, changePassword)} className="space-y-5 sm:space-y-4">
                                 <div className="space-y-2">
                                     <Typography
                                         as="label"
@@ -367,7 +342,7 @@ export default function AccountSettings() {
                                             errors.currentPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.currentPassword}
-                                        onChange={handlePasswordChange}
+                                        onChange={(e) => handlePasswordInputChange(e, handlePasswordChange)}
                                     />
                                     {errors.currentPassword && (
                                         <p className="text-red-500 text-sm sm:text-xs mt-1">
@@ -393,7 +368,7 @@ export default function AccountSettings() {
                                             errors.newPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.newPassword}
-                                        onChange={handlePasswordChange}
+                                        onChange={(e) => handlePasswordInputChange(e, handlePasswordChange)}
                                     />
                                     {errors.newPassword && (
                                         <p className="text-red-500 text-sm sm:text-xs mt-1">
@@ -419,7 +394,7 @@ export default function AccountSettings() {
                                             errors.confirmPassword ? "border-red-500" : ""
                                         }`}
                                         value={passwordData.confirmPassword}
-                                        onChange={handlePasswordChange}
+                                        onChange={(e) => handlePasswordInputChange(e, handlePasswordChange)}
                                     />
                                     {errors.confirmPassword && (
                                         <p className="text-red-500 text-sm sm:text-xs mt-1">
@@ -429,8 +404,9 @@ export default function AccountSettings() {
                                 </div>
                                 <Button
                                     type="submit"
+                                    disabled={isChanging}
                                     className="mt-6 sm:mt-4 bg-blue-400 text-white hover:bg-blue-600 focus:bg-blue-600 active:bg-blue-700 dark:text-white py-3 px-6 sm:py-2 sm:px-4 text-base sm:text-sm w-full sm:w-auto">
-                                    Change Password
+                                    {isChanging ? "Changing Password..." : "Change Password"}
                                 </Button>
                             </form>
                         </CardBody>

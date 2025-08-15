@@ -103,7 +103,7 @@ export const useTasks = () => {
             await apiService.updateTask(taskData);
 
             // Update local state
-            updateTask(taskData.task_id, {
+            updateTask(taskData.id, {
                 title: taskData.title,
                 description: taskData.description,
                 priority: taskData.priority,
@@ -128,7 +128,7 @@ export const useTasks = () => {
         setError(null);
 
         try {
-            await apiService.updateTaskStatus({ task_id: taskId, status: newStatus });
+            await apiService.updateTaskStatus({ id: taskId, status: newStatus });
 
             // Update local state
             moveTask(taskId, newStatus);
@@ -174,7 +174,7 @@ export const useTasks = () => {
         moveTask(taskId, newStatus);
 
         try {
-            await apiService.updateTaskStatus({ task_id: taskId, status: newStatus });
+            await apiService.updateTaskStatus({ id: taskId, status: newStatus });
         } catch (error) {
             // Revert the optimistic update by refetching
             await fetchTasks();

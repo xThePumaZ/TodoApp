@@ -40,7 +40,7 @@ class AddTaskFormType extends AbstractType
         $resolver->setDefaults([
             'data_class' => 'App\Entity\Task',
             'csrf_protection' => true,
-            'csrf_field_name' => '_token',
+            'csrf_field_name' => 'csfr_token',
             'csrf_token_id' => 'add_task',
         ]);
     }

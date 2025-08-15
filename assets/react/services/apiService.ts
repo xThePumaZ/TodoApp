@@ -20,18 +20,20 @@ export interface CreateTaskRequest {
     description?: string;
     priority: string;
     due_date?: string;
+    _token?: string; // Optional CSRF token for security
 }
 
 export interface UpdateTaskRequest {
-    task_id: number;
+    id: number;
     title?: string;
     description?: string;
     priority?: string;
     due_date?: string;
+    _token?: string; // Optional CSRF token for security
 }
 
 export interface UpdateTaskStatusRequest {
-    task_id: number;
+    id: number;
     status: string;
 }
 
@@ -126,9 +128,39 @@ class ApiService {
         return this.post<ApiResponse>(`/task/delete?id=${taskId}`);
     }
 
-    // User API methods (if needed)
+    // User API methods
     async getCurrentUser(): Promise<ApiResponse> {
         return this.get<ApiResponse>('/user/current');
+    }
+
+    async loadProfilePicture(): Promise<ApiResponse<string[]>> {
+        return this.get<ApiResponse<string[]>>('/user/loadProfilePicture');
+    }
+
+    async changeProfilePicture(formData: FormData): Promise<ApiResponse> {
+        return this.request<ApiResponse>('/user/change_picture', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData,
+        });
+    }
+
+    async changePassword(currentPassword: string, newPassword: string, confirmPassword: string,_token: string): Promise<ApiResponse> {
+        return this.request<ApiResponse>('/user/changePassword', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({
+                currentPassword,
+                newPassword,
+                confirmPassword,
+                _token// Assuming retype is the same as new password
+            }),
+        });
     }
 
     // Utility method to handle API errors consistently

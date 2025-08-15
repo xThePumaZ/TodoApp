@@ -107,6 +107,7 @@ export default function AddTaskForm({ url, priorities, csfr_token, onTaskAdded }
             description: formData.description,
             priority: priorityMap[formData.priority],
             due_date: formData.due_date ? format(formData.due_date, "yyyy-MM-dd") : undefined,
+            csfr_token: csfr_token || ""
         };
 
         const success = await createTask(taskData);

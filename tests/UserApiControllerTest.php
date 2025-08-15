@@ -2,6 +2,7 @@
 
 namespace App\Tests;
 
+use App\Config\StatusMessages;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -130,7 +131,7 @@ class UserApiControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
-        self::assertEquals('No profile picture found, using default image.', $response['message']);
+        self::assertEquals(StatusMessages::ProfilePictureNotFound, $response['message']);
         self::assertArrayHasKey('data', $response);
         self::assertStringContainsString('data:image/jpeg;base64,', $response['data'][0]);
     }
@@ -156,7 +157,7 @@ class UserApiControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
-        self::assertEquals('Profile picture loaded successfully.', $response['message']);
+        self::assertEquals(StatusMessages::ProfilePictureLoaded, $response['status']);
         self::assertArrayHasKey('data', $response);
         self::assertStringContainsString('data:image/jpeg;base64,', $response['data'][0]);
     }
@@ -172,13 +173,14 @@ class UserApiControllerTest extends WebTestCase
         $this->loginUser();
 
         $this->client->request('POST', '/api/v1/user/changePassword', [
-            'newPassword' => 'newpassword123'
+            'newPassword' => 'newpassword123',
+            'csfr_token' => 'test_csrf_token'
         ]);
 
         self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
-        self::assertEquals('No current password provided.', $response['message']);
+        self::assertEquals(StatusMessages::InvalidInput, $response['message']);
     }
 
     public function testChangePasswordWithoutNewPassword(): void
@@ -186,13 +188,14 @@ class UserApiControllerTest extends WebTestCase
         $this->loginUser();
 
         $this->client->request('POST', '/api/v1/user/changePassword', [
-            'currentPassword' => 'password'
+            'currentPassword' => 'password',
+            'csfr_token' => 'test_csrf_token'
         ]);
 
         self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
-        self::assertEquals('No current password provided.', $response['message']);
+        self::assertEquals(StatusMessages::InvalidInput, $response['message']);
     }
 
     public function testChangePasswordWithValidData(): void
@@ -201,13 +204,15 @@ class UserApiControllerTest extends WebTestCase
 
         $this->client->request('POST', '/api/v1/user/changePassword', [
             'currentPassword' => 'oldpassword',
-            'newPassword' => 'newpassword123'
+            'newPassword' => 'newpassword123',
+            'confirmPassword' => 'newpassword123',
+            'csfr_token' => 'test_csrf_token'
         ]);
 
         self::assertResponseIsSuccessful();
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
-        self::assertEquals('Password updated successfully.', $response['message']);
+        self::assertEquals(StatusMessages::PasswordUpdated, $response['message']);
 
         // Verify the password was updated
         $updatedUser = $this->entityManager->getRepository(User::class)->find($this->testUser->getId());
@@ -221,12 +226,14 @@ class UserApiControllerTest extends WebTestCase
     {
         $this->loginUser();
 
-        $this->client->request('POST', '/api/v1/user/changePassword');
+        $this->client->request('POST', '/api/v1/user/changePassword', [
+            'csfr_token' => 'test_csrf_token'
+        ]);
 
         self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
-        self::assertEquals('No current password provided.', $response['message']);
+        self::assertEquals(StatusMessages::InvalidInput, $response['message']);
     }
 
     public function testApiEndpointsRequireAuthentication(): void
@@ -269,7 +276,7 @@ class UserApiControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $response = json_decode($this->client->getResponse()->getContent(), true);
 
-        self::assertEquals('Profile picture updated successfully.', $response['message']);
+        self::assertEquals(StatusMessages::ProfilePictureUpdated, $response['message']);
 
         // Clean up
         unlink($tempFile);

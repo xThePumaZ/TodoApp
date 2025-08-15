@@ -126,12 +126,15 @@ export default function TaskItem({ task, csfr_token, onTaskUpdate, onTaskDelete 
 
     const handleEditSave = async (taskData: { id: string; title: string; description: string; due_date: string; priority: string; csfr_token: string}) => {
         const updateData = {
-            task_id: parseInt(taskData.id),
+            id: parseInt(taskData.id),
             title: taskData.title,
             description: taskData.description || '',
             due_date: taskData.due_date || undefined,
             priority: taskData.priority || '',
+            _token: taskData.csfr_token || csfr_token
         };
+
+        console.log(updateData);
 
         const success = await updateTask(updateData);
         if (success) {
