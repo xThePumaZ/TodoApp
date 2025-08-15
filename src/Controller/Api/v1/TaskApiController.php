@@ -23,6 +23,9 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 
+/**
+ *
+ */
 class TaskApiController extends BaseController
 {
     /**
@@ -48,6 +51,12 @@ class TaskApiController extends BaseController
         return BaseController::createResponse('Tasks retrieved successfully', Response::HTTP_OK, $serializer->serialize($tasksByStatus,'json'));
     }
 
+    /**
+     * @param Request $request
+     * @param EntityManagerInterface $entityManager
+     * @param AuthorizationCheckerInterface $authorizationChecker
+     * @return Response
+     */
     #[Route('/api/v1/task/delete', name: 'app_task_remove', methods: ['POST'])]
     public function deleteTask(Request $request, EntityManagerInterface $entityManager, AuthorizationCheckerInterface $authorizationChecker): Response
     {
@@ -97,6 +106,12 @@ class TaskApiController extends BaseController
         return BaseController::createResponse(StatusMessages::TaskStatusNotChanged, Response::HTTP_NOT_MODIFIED);
     }
 
+    /**
+     * @param Request $request
+     * @param EntityManagerInterface $entityManager
+     * @param AuthorizationCheckerInterface $authorizationChecker
+     * @return Response
+     */
     #[Route('/api/v1/task/addTask', name: 'app_task_addtask', methods: ['POST'])]
     public function addTask(Request $request, EntityManagerInterface $entityManager, AuthorizationCheckerInterface $authorizationChecker): Response
     {
@@ -132,6 +147,12 @@ class TaskApiController extends BaseController
         }
     }
 
+    /**
+     * @param Request $request
+     * @param EntityManagerInterface $entityManager
+     * @param AuthorizationCheckerInterface $authorizationChecker
+     * @return Response
+     */
     #[Route('/api/v1/task/editTask', name: 'app_task_edittask', methods: ['POST'])]
     public function editTask(Request $request, EntityManagerInterface $entityManager, AuthorizationCheckerInterface $authorizationChecker): Response
     {
@@ -168,6 +189,10 @@ class TaskApiController extends BaseController
         }
     }
 
+    /**
+     * @param string $status
+     * @return bool|int
+     */
     private function mapStatusToInt(string $status): bool|int
     {
         foreach (Status::cases() as $case) {
@@ -178,6 +203,10 @@ class TaskApiController extends BaseController
         return false;
     }
 
+    /**
+     * @param Task $task
+     * @return TaskDto
+     */
     private function mapTaskToDto(Task $task): TaskDto
     {
         return new TaskDto(

@@ -16,7 +16,6 @@ class SecurityController extends AbstractController
         if ($authorizationChecker->isGranted('ROLE_USER')) {
             return $this->redirectToRoute('app_dashboard');
         } else {
-            // Render the login form with any errors and last username
             return $this->render('security/login.html.twig', [
                 'last_username' => $authenticationUtils->getLastUsername(),
                 'error' => $authenticationUtils->getLastAuthenticationError(),

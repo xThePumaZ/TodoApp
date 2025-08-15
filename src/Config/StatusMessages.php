@@ -23,4 +23,15 @@ enum StatusMessages: string
     case BadRequest = 'Bad request';
     case Conflict = 'Conflict detected';
     case UnprocessableEntity = 'Unprocessable entity';
+
+    case PasswordUpdated = 'Password updated successfully';
+
+    case ProfilePictureUpdated = 'Profile picture updated successfully';
+    case ProfilePictureNotFound = 'Profile picture not found';
+    case ProfilePictureDefault = 'Using default profile picture';
+    case ProfilePictureLoaded = 'Profile picture loaded successfully';
+    case ProfilePictureChangeFailed = 'Failed to change profile picture';
+    case ProfilePictureLoadFailed = 'Failed to load profile picture';
+    case ProfilePictureInvalidFormat = 'Invalid profile picture format';
+    case ProfilePictureNotProvided = 'No profile picture provided';
 }

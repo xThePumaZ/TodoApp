@@ -6,6 +6,7 @@ import "react-day-picker/style.css";
 import {format} from "date-fns";
 
 import * as React from "react";
+import { useTasks } from "../../hooks/useTasks";
 
 import {DialogOpenButton} from "./AddTaskButton";
 
@@ -14,6 +15,7 @@ interface AddTaskFormProps {
     url: string;
     priorities: Record<string, string>;
     csfr_token?: string; // Optional CSRF token for security
+    onTaskAdded?: () => void; // Callback for when task is successfully added
 }
 
 interface FormData {
@@ -33,13 +35,15 @@ interface FormErrors {
 
 type PriorityValue = "low" | "medium" | "high";
 
-export default function AddTaskForm(props: AddTaskFormProps) {
+export default function AddTaskForm({ url, priorities, csfr_token, onTaskAdded }: AddTaskFormProps) {
+    const { createTask, isLoading, error } = useTasks();
+
     const [formData, setFormData] = React.useState<FormData>({
         title: "",
         description: "",
         priority: "low", // Default priority
         due_date: null,
-        csfr_token: ""
+        csfr_token: csfr_token || ""
     });
 
     const [errors, setErrors] = React.useState<FormErrors>({});
@@ -85,7 +89,7 @@ export default function AddTaskForm(props: AddTaskFormProps) {
     };
 
     // Form submission
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (!validateForm()) {
@@ -98,39 +102,38 @@ export default function AddTaskForm(props: AddTaskFormProps) {
             "low": "Low"
         };
 
-        fetch(props.url, {
-            method: 'POST',
-            body: JSON.stringify({
-                title: formData.title,
-                description: formData.description,
-                priority: priorityMap[formData.priority],
-                due_date: formData.due_date ? format(formData.due_date, "yyyy-MM-dd") : null,
-                _token: props.csfr_token || ""
-            })
-        })
-            .then(response => {
-                if (response.ok) {
-                    // Reset form on success
-                    setFormData({
-                        title: "",
-                        description: "",
-                        priority: "low",
-                        due_date: null,
-                        csfr_token: props.csfr_token || ""
-                    });
+        const taskData = {
+            title: formData.title,
+            description: formData.description,
+            priority: priorityMap[formData.priority],
+            due_date: formData.due_date ? format(formData.due_date, "yyyy-MM-dd") : undefined,
+        };
 
-                    // Reload the page to show the new task
-                    window.location.reload();
-                } else {
-                    return response.text().then(text => {
-                        throw new Error(text || 'Failed to add task');
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error adding task:', error);
-                alert('Failed to add task: ' + error.message);
+        const success = await createTask(taskData);
+
+        if (success) {
+            // Reset form on success
+            setFormData({
+                title: "",
+                description: "",
+                priority: "low",
+                due_date: null,
+                csfr_token: csfr_token || ""
             });
+
+            // Show success notification
+            if (window.notifications) {
+                window.notifications.success('Task Created', `"${taskData.title}" has been added successfully`);
+            }
+
+            // Call the callback to update the parent component
+            onTaskAdded?.();
+        } else {
+            // Show error notification
+            if (window.notifications) {
+                window.notifications.error('Failed to Create Task', error || 'An unknown error occurred');
+            }
+        }
     };
 
     return (
@@ -214,7 +217,7 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                             </Typography>
                             <Radio id="priority" className="space-y-3 sm:space-y-2" value={formData.priority}
                                    onValueChange={handlePriorityChange} orientation="vertical">
-                                {Object.entries(props.priorities).map(([priorityValue]) => {
+                                {Object.entries(priorities).map(([priorityValue]) => {
                                     // Map priority values to radio button values
                                     const radioValue = priorityValue.toLowerCase() as PriorityValue;
                                     const priorityId = radioValue;
@@ -292,7 +295,7 @@ export default function AddTaskForm(props: AddTaskFormProps) {
                             >
                                 Add Task
                             </Button>
-                            <input type="hidden" name="csrfmiddlewaretoken" value={props.csfr_token || ""}/>
+                            <input type="hidden" name="csrfmiddlewaretoken" value={csfr_token || ""}/>
                         </div>
                     </form>
                     <Typography

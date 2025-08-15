@@ -12,32 +12,50 @@ import {
     UserCircle,
 } from "iconoir-react";
 
+interface ProfilePictureResponse {
+    data: string[];
+    message?: string;
+}
 
 function ProfileMenu() {
-    const [profilePicture, setProfilePicture] = React.useState("");
-    const [isLoading, setIsLoading] = React.useState(true);
+    const [profilePicture, setProfilePicture] = React.useState<string>("");
+    const [isLoading, setIsLoading] = React.useState<boolean>(true);
+    const [error, setError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         setIsLoading(true);
+        setError(null);
+
         fetch('/api/v1/user/loadProfilePicture', {
             method: 'GET'
         })
             .then(async response => {
                 if (response.status !== 200) {
-                    const data = await response.json();
-                    console.error("Failed to get profile image:", data.message);
+                    const data: ProfilePictureResponse = await response.json().catch(() => ({ data: [], message: 'Unknown error' }));
                     throw new Error(data.message || 'Failed to get profile image');
                 }
-                return response.json();
+                return response.json() as Promise<ProfilePictureResponse>;
             })
             .then(data => {
-                setProfilePicture(data.data[0]);
+                if (data.data && data.data.length > 0) {
+                    setProfilePicture(data.data[0]);
+                }
                 setIsLoading(false);
             })
+            .catch(error => {
+                console.error("Failed to get profile image:", error.message);
+                setError(error.message);
+                setIsLoading(false);
+            });
     }, []);
 
     if (isLoading) {
         return null; // Don't render anything while loading
+    }
+
+    if (error) {
+        // Fallback to default avatar on error
+        console.warn("Using default avatar due to error:", error);
     }
 
     return (
@@ -84,12 +102,7 @@ export default function NavbarWithMegaMenu() {
                     WhatsToDo
                 </Typography>
                 <div className="flex items-center gap-2">
-                    <div className="lg:hidden">
-                        <ProfileMenu/>
-                    </div>
-                    <div className="hidden lg:block">
-                        <ProfileMenu/>
-                    </div>
+                    <ProfileMenu/>
                 </div>
             </div>
         </Navbar>

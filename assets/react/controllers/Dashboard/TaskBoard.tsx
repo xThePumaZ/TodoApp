@@ -1,50 +1,38 @@
 import * as React from "react";
 import TaskColumn from "./TaskColumn";
+import { useTasks } from "../../hooks/useTasks";
 
-function loadTasksWithStatus() {
-    const [tasksByStatus, setTasksByStatus] = React.useState("");
-    const [isLoading, setIsLoading] = React.useState(true);
-
-    React.useEffect(() => {
-        setIsLoading(true);
-        fetch('/api/v1/task/getTasksWithStatus', {
-            method: 'GET'
-        })
-            .then(async response => {
-                if (response.status !== 200) {
-                    const data = await response.json();
-                    console.error("Failed to get tasks status: ", data.message);
-                    throw new Error(data.message || 'Failed to get profile image');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.data) {
-                    setTasksByStatus(JSON.parse(data.data));
-                }
-                setIsLoading(false);
-            })
-    }, []);
-
-    return { tasksByStatus, isLoading };
+interface TaskBoardProps {
+    csfr_token: string;
 }
 
-export default function TaskBoard(props : any) {
+export default function TaskBoard({ csfr_token }: TaskBoardProps) {
+    const { tasksByStatus, isLoading, error, fetchTasks } = useTasks();
 
-    const {tasksByStatus, isLoading} = loadTasksWithStatus();
+    React.useEffect(() => {
+        fetchTasks();
+    }, [fetchTasks]);
 
     if (isLoading) {
-        return <div>Loading...</div>; // You can replace this with a spinner or loading component
+        return <div className="flex justify-center items-center p-8">Loading tasks...</div>;
+    }
+
+    if (error) {
+        return <div className="flex justify-center items-center p-8 text-red-600">Error: {error}</div>;
+    }
+
+    if (!tasksByStatus) {
+        return <div className="flex justify-center items-center p-8">No tasks found.</div>;
     }
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {tasksByStatus && Object.entries(tasksByStatus).map(([status,tasks]) => (
+            {Object.entries(tasksByStatus).map(([status, tasks]) => (
                 <TaskColumn
                     key={status}
                     status={status}
                     tasks={tasks}
-                    csfr_token={props.csfr_token} // Assuming csrf_token is part of tasksByStatus
+                    csfr_token={csfr_token}
                 />
             ))}
         </div>

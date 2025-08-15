@@ -1,9 +1,32 @@
 import * as React from "react";
 import { draggable } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { Badge } from "@material-tailwind/react";
+import { useTasks } from "../../hooks/useTasks";
 import EditTaskModal from "./EditTaskModal";
 
-export default function TaskItem({ task, csfr_token }) {
+interface Task {
+    id: number;
+    title: string;
+    description?: string;
+    priority: string;
+    due_date?: string;
+    dueDate?: string;
+    status: {
+        name: string;
+    } | string;
+    updatedAt?: string;
+    createdAt?: string;
+}
+
+interface TaskItemProps {
+    task: Task;
+    csfr_token: string;
+    onTaskUpdate?: () => void;
+    onTaskDelete?: () => void;
+}
+
+export default function TaskItem({ task, csfr_token, onTaskUpdate, onTaskDelete }: TaskItemProps) {
+    const { optimisticUpdateTaskStatus, removeTask, updateTask } = useTasks();
     const taskItemRef = React.useRef(null);
     const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
     const [isDragging, setIsDragging] = React.useState(false);
@@ -16,20 +39,20 @@ export default function TaskItem({ task, csfr_token }) {
                 element: element,
                 getInitialData: () => ({
                     taskId: task.id,
-                    status: task.status?.name || task.status
+                    status: typeof task.status === 'object' ? task.status.name : task.status
                 }),
             });
         }
     }, [task.id, task.status]);
 
     // Mobile touch event handlers
-    const handleTouchStart = (e) => {
+    const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
         const touch = e.touches[0];
         setTouchStartPos({ x: touch.clientX, y: touch.clientY });
         setIsDragging(false);
     };
 
-    const handleTouchMove = (e) => {
+    const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
         if (!taskItemRef.current) return;
 
         const touch = e.touches[0];
@@ -42,10 +65,11 @@ export default function TaskItem({ task, csfr_token }) {
             e.preventDefault();
 
             // Add visual feedback
-            taskItemRef.current.style.opacity = '0.7';
-            taskItemRef.current.style.transform = 'scale(1.05)';
-            taskItemRef.current.style.zIndex = '1000';
-            taskItemRef.current.style.position = 'relative';
+            const element = taskItemRef.current as HTMLElement;
+            element.style.opacity = '0.7';
+            element.style.transform = 'scale(1.05)';
+            element.style.zIndex = '1000';
+            element.style.position = 'relative';
         }
 
         if (isDragging) {
@@ -53,7 +77,7 @@ export default function TaskItem({ task, csfr_token }) {
         }
     };
 
-    const handleTouchEnd = (e) => {
+    const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
         if (!isDragging || !taskItemRef.current) {
             setIsDragging(false);
             return;
@@ -71,108 +95,66 @@ export default function TaskItem({ task, csfr_token }) {
 
         if (targetColumn) {
             const newStatus = targetColumn.getAttribute('data-status');
-            const currentStatus = task.status?.name || task.status;
+            const currentStatus = typeof task.status === 'object' ? task.status.name : task.status;
 
             if (newStatus && newStatus !== currentStatus) {
-                // Update task status via API
-                fetch(`/api/v1/task/updateStatus`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        task_id: task.id,
-                        status: newStatus,
-                    }),
-                }).then(r => {
-                    if (r.status === 200) {
-                        // Reload the page to reflect changes
-                        window.location.reload();
-                    } else {
-                        throw new Error('Network response was not ok');
-                    }
-                }).catch(error => {
-                    console.error('Error updating task status:', error);
-                    alert('Error updating task status: ' + error.message);
-                });
+                // Update task status via optimistic update
+                optimisticUpdateTaskStatus(task.id, newStatus);
+                // Call the callback to update the parent component
+                onTaskUpdate?.();
             }
         }
 
         setIsDragging(false);
     };
 
-    const handleDelete = (e) => {
+    const handleDelete = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
-        if (window.confirm('Wirklich löschen?')) {
-            // Submit delete form
-            const formData = new FormData();
-            fetch(`/api/v1/task/delete?id=${task.id}`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (response.ok) {
-                    // Reload the page to reflect changes
-                    window.location.reload();
-                } else {
-                    console.error('Failed to delete task');
-                    alert('Failed to delete task');
-                }
-            })
-            .catch(error => {
-                console.error('Error deleting task:', error);
-                alert('Error deleting task: ' + error.message);
-            });
+        if (window.confirm('Are you sure you want to delete this task?')) {
+            const success = await removeTask(task.id);
+            if (success) {
+                // Call the callback to update the parent component
+                onTaskDelete?.();
+            }
         }
     };
 
-    const handleEdit = (e) => {
+    const handleEdit = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         setIsEditModalOpen(true);
     };
 
-    const handleEditSave = (taskData: { id: string | Blob; title: string | Blob; description: string; due_date: any; priority: string; csfr_token}) => {
-        fetch('/api/v1/task/editTask', {
-            method: 'POST',
-            body:  JSON.stringify({
-                task_id: taskData.id,
-                title: taskData.title,
-                description: taskData.description || '',
-                due_date: taskData.due_date || '',
-                priority: taskData.priority || '',
-                csfr_token: taskData.csfr_token || csfr_token
-            })
-        })
-        .then(response => {
-            if (response.ok) {
-                setIsEditModalOpen(false);
-                // Reload the page to reflect changes
-                window.location.reload();
-            } else {
-                console.error('Failed to update task');
-                alert('Failed to update task');
-            }
-        })
-        .catch(error => {
-            console.error('Error updating task:', error);
-            alert('Error updating task: ' + error.message);
-        });
+    const handleEditSave = async (taskData: { id: string; title: string; description: string; due_date: string; priority: string; csfr_token: string}) => {
+        const updateData = {
+            task_id: parseInt(taskData.id),
+            title: taskData.title,
+            description: taskData.description || '',
+            due_date: taskData.due_date || undefined,
+            priority: taskData.priority || '',
+        };
+
+        const success = await updateTask(updateData);
+        if (success) {
+            setIsEditModalOpen(false);
+            // Call the callback to update the parent component
+            onTaskUpdate?.();
+        }
     };
 
     const handleEditClose = () => {
         setIsEditModalOpen(false);
     };
 
-    const formatDate = (dateString) => {
+    const formatDate = (dateString: string | null | undefined): string => {
         if (!dateString) return '';
         const date = new Date(dateString);
         return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
     };
 
-    const formatDateTime = (dateString) => {
+    const formatDateTime = (dateString: string | null | undefined): string => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        return date.toLocaleString('de-DE', {
+        return date.toLocaleString('en-US', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
@@ -181,7 +163,7 @@ export default function TaskItem({ task, csfr_token }) {
         });
     };
 
-    const getPriorityColor = (priority) => {
+    const getPriorityColor = (priority: string): string => {
         switch (priority) {
             case 'High':
                 return 'bg-red-500';
@@ -199,7 +181,7 @@ export default function TaskItem({ task, csfr_token }) {
             ref={taskItemRef}
             className="relative flex flex-col bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm border border-slate-200 rounded-lg w-full task-item"
             data-task-id={task.id}
-            data-status={task.status?.name || task.status}
+            data-status={typeof task.status === 'object' ? task.status.name : task.status}
             style={{ touchAction: 'none' }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
