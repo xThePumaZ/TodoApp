@@ -1,4 +1,5 @@
 import * as React from "react";
+import { apiService, ApiError } from "../services/apiService";
 
 interface PasswordData {
     currentPassword: string;
@@ -39,24 +40,36 @@ export function useAccountSettings() {
         }
     };
 
-    // Handle profile image save
+    // Handle profile image save with improved error handling
     const handleProfileImageSave = async (
-        uploadProfilePicture: () => Promise<{ success: boolean; message: string }>
+        uploadFunction: () => Promise<{ success: boolean; message: string }>
     ): Promise<void> => {
-        const result = await uploadProfilePicture();
-        if (result.success) {
-            setSuccessMessage(result.message);
-            setErrorMessage("");
-        } else {
-            setErrorMessage(result.message);
+        try {
             setSuccessMessage("");
-        }
+            setErrorMessage("");
 
-        // Clear messages after 3 seconds
-        setTimeout(() => {
-            setSuccessMessage("");
-            setErrorMessage("");
-        }, 3000);
+            const result = await uploadFunction();
+
+            if (result.success) {
+                setSuccessMessage(result.message);
+            } else {
+                setErrorMessage(result.message);
+            }
+
+            // Clear messages after 3 seconds
+            setTimeout(() => {
+                setSuccessMessage("");
+                setErrorMessage("");
+            }, 3000);
+
+        } catch (error) {
+            const errorMsg = error instanceof ApiError ? error.message : 'Fehler beim Hochladen des Bildes';
+            setErrorMessage(errorMsg);
+
+            setTimeout(() => {
+                setErrorMessage("");
+            }, 3000);
+        }
     };
 
     // Handle password input changes
@@ -68,27 +81,38 @@ export function useAccountSettings() {
         handlePasswordChange(id as keyof PasswordData, value);
     };
 
-    // Handle password form submission
     const handlePasswordSubmit = async (
         e: React.FormEvent<HTMLFormElement>,
-        changePassword: () => Promise<{ success: boolean; message: string }>
+        changePasswordFunction: () => Promise<{ success: boolean; message: string }>
     ): Promise<void> => {
         e.preventDefault();
 
-        const result = await changePassword();
-        if (result.success) {
-            setSuccessMessage(result.message);
-            setErrorMessage("");
-        } else {
-            setErrorMessage(result.message);
+        try {
             setSuccessMessage("");
-        }
+            setErrorMessage("");
 
-        // Clear messages after 3 seconds
-        setTimeout(() => {
-            setSuccessMessage("");
-            setErrorMessage("");
-        }, 3000);
+            const result = await changePasswordFunction();
+
+            if (result.success) {
+                setSuccessMessage(result.message);
+            } else {
+                setErrorMessage(result.message);
+            }
+
+            // Clear messages after 3 seconds
+            setTimeout(() => {
+                setSuccessMessage("");
+                setErrorMessage("");
+            }, 3000);
+
+        } catch (error) {
+            const errorMsg = error instanceof ApiError ? error.message : 'Fehler beim Ändern des Passworts';
+            setErrorMessage(errorMsg);
+
+            setTimeout(() => {
+                setErrorMessage("");
+            }, 3000);
+        }
     };
 
     return {

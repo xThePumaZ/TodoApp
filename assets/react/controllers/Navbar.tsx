@@ -2,7 +2,6 @@ import * as React from "react";
 import {
     Typography,
     Navbar,
-    List,
     Avatar,
     Menu,
 } from "@material-tailwind/react";
@@ -11,10 +10,10 @@ import {
     Settings,
     UserCircle,
 } from "iconoir-react";
+import { apiService, ApiError } from "../services/apiService";
 
-interface ProfilePictureResponse {
-    data: string[];
-    message?: string;
+interface ProfilePictureData {
+    image: string;
 }
 
 function ProfileMenu() {
@@ -23,30 +22,35 @@ function ProfileMenu() {
     const [error, setError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
-        setIsLoading(true);
-        setError(null);
+        const loadProfilePicture = async () => {
+            setIsLoading(true);
+            setError(null);
 
-        fetch('/api/v1/user/loadProfilePicture', {
-            method: 'GET'
-        })
-            .then(async response => {
-                if (response.status !== 200) {
-                    const data: ProfilePictureResponse = await response.json().catch(() => ({ data: [], message: 'Unknown error' }));
-                    throw new Error(data.message || 'Failed to get profile image');
+            try {
+                const response = await apiService.loadProfilePicture();
+
+                // Handle the new API response format with data.image
+                if (response.data && typeof response.data === 'object' && 'image' in response.data) {
+                    const profileData = response.data as ProfilePictureData;
+                    setProfilePicture(profileData.image);
+                } else if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+                    // Fallback for old format
+                    setProfilePicture(response.data[0]);
                 }
-                return response.json() as Promise<ProfilePictureResponse>;
-            })
-            .then(data => {
-                if (data.data && data.data.length > 0) {
-                    setProfilePicture(data.data[0]);
-                }
+
                 setIsLoading(false);
-            })
-            .catch(error => {
-                console.error("Failed to get profile image:", error.message);
-                setError(error.message);
+            } catch (error) {
+                const errorMessage = error instanceof ApiError
+                    ? error.message
+                    : 'Failed to load profile picture';
+
+                console.error("Failed to get profile image:", errorMessage);
+                setError(errorMessage);
                 setIsLoading(false);
-            });
+            }
+        };
+
+        loadProfilePicture();
     }, []);
 
     if (isLoading) {

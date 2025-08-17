@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Routing\Attribuwte\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * API Controller für User-Management
@@ -28,35 +28,42 @@ class UserApiController extends BaseController
     /**
      * Ändert das Profilbild des Benutzers
      */
-    #[Route('/api/v1/user/picture', name: 'app_account_change_picture', methods: ['PUT'])]
+    #[Route('/api/v1/user/picture/change', name: 'app_account_change_picture', methods: ['POST'])]
     public function changePicture(Request $request, EntityManagerInterface $entityManager): Response
     {
         try {
             $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-
-            if (!$request->files->has('profileImage')) {
+            $file = $request->files->get('profileImage');
+            if (!$file) {
                 return BaseController::createResponse(StatusMessages::ProfilePictureNotProvided, Response::HTTP_BAD_REQUEST);
             }
 
-            /** @var UploadedFile $file */
-            $file = $request->files->get('profileImage');
             $validationResult = $this->validateUploadedFile($file);
-
             if ($validationResult !== null) {
                 return $validationResult;
             }
 
-            $profilePicture = base64_encode($file->getContent());
+            $fileContent = $file->getContent();
+            if ($fileContent === false) {
+                return BaseController::createResponse(
+                    StatusMessages::ProfilePictureFailedToLoad,
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
+            $profilePicture = base64_encode($fileContent);
             $user = $this->getUser();
             $user->setProfilePicture($profilePicture);
 
             $entityManager->flush();
 
-            return BaseController::createResponse(StatusMessages::ProfilePictureUpdated, Response::HTTP_OK);
+            return BaseController::createResponse(
+                StatusMessages::ProfilePictureUpdated
+            );
 
         } catch (Exception $e) {
             return BaseController::createResponse(
-                StatusMessages::ProfilePictureUpdateFailed ?? 'Fehler beim Aktualisieren des Profilbilds',
+                StatusMessages::ProfilePictureChangeFailed,
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
@@ -65,7 +72,7 @@ class UserApiController extends BaseController
     /**
      * Lädt das Profilbild des Benutzers
      */
-    #[Route('/api/v1/user/picture', name: 'app_account_load_profile_picture', methods: ['GET'])]
+    #[Route('/api/v1/user/picture/load', name: 'app_account_load_profile_picture', methods: ['GET'])]
     public function loadProfilePicture(ProfilePictureService $pictureService): Response
     {
         try {
@@ -91,7 +98,7 @@ class UserApiController extends BaseController
 
         } catch (Exception $e) {
             return BaseController::createResponse(
-                StatusMessages::ProfilePictureLoadFailed ?? 'Fehler beim Laden des Profilbilds',
+                StatusMessages::ProfilePictureLoadFailed,
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
@@ -100,7 +107,7 @@ class UserApiController extends BaseController
     /**
      * Ändert das Passwort des Benutzers
      */
-    #[Route('/api/v1/user/password', name: 'app_account_change_password', methods: ['PATCH'])]
+    #[Route('/api/v1/user/password/change', name: 'app_account_change_password', methods: ['PATCH'])]
     public function changePassword(
         Request $request,
         EntityManagerInterface $entityManager,
@@ -114,7 +121,7 @@ class UserApiController extends BaseController
 
             if (!$userPasswordHasher->isPasswordValid($user, $passwordDto->getCurrentPassword())) {
                 return BaseController::createResponse(
-                    StatusMessages::InvalidCurrentPassword ?? 'Aktuelles Passwort ist ungültig',
+                    StatusMessages::PasswordInvalid,
                     Response::HTTP_BAD_REQUEST
                 );
             }
@@ -123,18 +130,7 @@ class UserApiController extends BaseController
             $form->submit($request->getPayload()->all());
 
             if (!$form->isValid()) {
-                return BaseController::createResponse(StatusMessages::TaskInvalidData, Response::HTTP_BAD_REQUEST);
-            }
-
-            if ($passwordDto->getNewPassword() !== $passwordDto->getConfirmPassword()) {
-                return BaseController::createResponse(StatusMessages::PasswordMismatch, Response::HTTP_BAD_REQUEST);
-            }
-
-            if ($userPasswordHasher->isPasswordValid($user, $passwordDto->getNewPassword())) {
-                return BaseController::createResponse(
-                    StatusMessages::PasswordNotChanged ?? 'Das neue Passwort muss sich vom aktuellen unterscheiden',
-                    Response::HTTP_BAD_REQUEST
-                );
+                return BaseController::createResponse(StatusMessages::InvalidInput, Response::HTTP_BAD_REQUEST);
             }
 
             $user->setPassword($userPasswordHasher->hashPassword($user, $passwordDto->getNewPassword()));
@@ -156,22 +152,24 @@ class UserApiController extends BaseController
     private function validateUploadedFile(UploadedFile $file): ?Response
     {
         if (!$file->isValid()) {
+            $error = $file->getErrorMessage();
             return BaseController::createResponse(
-                StatusMessages::FileUploadError ?? 'Fehler beim Datei-Upload',
+                'Fehler beim Datei-Upload: ' . $error,
                 Response::HTTP_BAD_REQUEST
             );
         }
 
         if ($file->getSize() > self::MAX_FILE_SIZE) {
             return BaseController::createResponse(
-                StatusMessages::FileTooLarge ?? 'Datei ist zu groß (max. 5MB)',
+                'Datei ist zu groß (max. 5MB)',
                 Response::HTTP_BAD_REQUEST
             );
         }
 
-        if (!in_array($file->getMimeType(), self::ALLOWED_MIME_TYPES, true)) {
+        $mimeType = $file->getMimeType();
+        if (!in_array($mimeType, self::ALLOWED_MIME_TYPES, true)) {
             return BaseController::createResponse(
-                StatusMessages::InvalidFileType ?? 'Ungültiger Dateityp. Nur Bilder sind erlaubt.',
+                'Ungültiger Dateityp: ' . $mimeType . '. Nur JPEG, PNG, GIF und WebP sind erlaubt.',
                 Response::HTTP_BAD_REQUEST
             );
         }

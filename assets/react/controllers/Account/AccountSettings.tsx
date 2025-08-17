@@ -9,8 +9,8 @@ import {
     Tabs,
     Avatar,
 } from "@material-tailwind/react";
-import {UserCircle, Camera, Key, SelectFace3d, Settings, ProfileCircle} from "iconoir-react";
-import { apiService, ApiError } from "../../services/apiService";
+import {Camera, Key, ProfileCircle} from "iconoir-react";
+import {apiService, ApiError} from "../../services/apiService";
 import { useAccountSettings } from "../../hooks/useAccountSettings";
 
 
@@ -43,7 +43,7 @@ function useProfilePicture() {
         try {
             setIsLoading(true);
             const response = await apiService.loadProfilePicture();
-            setProfilePicture(response.data[0]);
+            setProfilePicture(response.data["image"] || response.data[0] || "");
         } catch (error) {
             console.error("Failed to load profile picture:", error);
         } finally {
@@ -74,7 +74,7 @@ function useProfilePicture() {
             const formData = new FormData();
             formData.append('profileImage', imageFile);
 
-            const response = await apiService.changeProfilePicture(formData);
+            const response = await apiService.changeProfilePicture(imageFile);
             setImageFile(null);
 
             return { success: true, message: response.message || "Profile picture updated successfully!" };
@@ -161,11 +161,14 @@ function usePasswordChange(csrfToken: string) {
 
         try {
             setIsChanging(true);
+
             const response = await apiService.changePassword(
-                passwordData.currentPassword,
-                passwordData.newPassword,
-                passwordData.confirmPassword,
-                csrfToken
+                {
+                    currentPassword : passwordData.currentPassword,
+                    newPassword : passwordData.newPassword,
+                    confirmPassword : passwordData.confirmPassword,
+                    _token: csrfToken
+                }
             );
 
             // Reset form on success

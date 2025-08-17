@@ -36,6 +36,17 @@ export interface UpdateTaskStatusRequest {
     status: string;
 }
 
+export interface ProfilePictureResponse {
+    image: string;
+}
+
+export interface PasswordChangeRequest {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    _token?: string;
+}
+
 class ApiService {
     private baseUrl: string = '/api/v1';
 
@@ -53,6 +64,11 @@ class ApiService {
             },
             ...options,
         };
+
+        // Don't set Content-Type for FormData - let browser set it with boundary
+        if (options.body instanceof FormData) {
+            delete (config.headers as any)['Content-Type'];
+        }
 
         try {
             const response = await fetch(url, config);
@@ -119,53 +135,41 @@ class ApiService {
     }
 
     async createTask(taskData: CreateTaskRequest): Promise<ApiResponse> {
-        return this.post<ApiResponse>('/task/addTask', taskData);
+        return this.post<ApiResponse>('/task', taskData);
     }
 
     async updateTask(taskData: UpdateTaskRequest): Promise<ApiResponse> {
-        return this.put<ApiResponse>(`/task/edit/${taskData.id}`, taskData);
+        return this.put<ApiResponse>(`/task/${taskData.id}`, taskData);
     }
 
     async updateTaskStatus(statusData: UpdateTaskStatusRequest): Promise<ApiResponse> {
-        return this.post<ApiResponse>('/task/updateStatus', statusData);
+        return this.patch<ApiResponse>('/task/updateStatus', statusData);
     }
 
     async deleteTask(taskId: number): Promise<ApiResponse> {
-        return this.delete<ApiResponse>(`/task/delete/${taskId}`);
+        return this.delete<ApiResponse>(`/task/${taskId}`);
     }
 
     async getCurrentUser(): Promise<ApiResponse> {
         return this.get<ApiResponse>('/user/current');
     }
 
-    async loadProfilePicture(): Promise<ApiResponse<string[]>> {
-        return this.get<ApiResponse<string[]>>('/user/loadProfilePicture');
+    async loadProfilePicture(): Promise<ApiResponse<ProfilePictureResponse>> {
+        return this.get<ApiResponse<ProfilePictureResponse>>('/user/picture/load');
     }
 
-    async changeProfilePicture(formData: FormData): Promise<ApiResponse> {
-        return this.request<ApiResponse>('/user/change_picture', {
+    async changeProfilePicture(imageFile: File): Promise<ApiResponse> {
+        const formData = new FormData();
+        formData.append('profileImage', imageFile);
+
+        return this.request<ApiResponse>('/user/picture/change', {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
             body: formData,
         });
     }
 
-    async changePassword(currentPassword: string, newPassword: string, confirmPassword: string,_token: string): Promise<ApiResponse> {
-        return this.request<ApiResponse>('/user/changePassword', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify({
-                currentPassword,
-                newPassword,
-                confirmPassword,
-                _token// Assuming retype is the same as new password
-            }),
-        });
+    async changePassword(passwordData: PasswordChangeRequest): Promise<ApiResponse> {
+        return this.patch<ApiResponse>('/user/password/change', passwordData);
     }
 
     static handleApiError(error: unknown): string {

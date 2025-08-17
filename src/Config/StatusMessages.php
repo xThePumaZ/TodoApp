@@ -38,5 +38,9 @@ enum StatusMessages: string
     case ProfilePictureInvalidFormat = 'Invalid profile picture format';
     case ProfilePictureNotProvided = 'No profile picture provided';
 
+    case ProfilePictureFailedToLoad = 'Failed to load profile picture file';
+
     case PasswordMismatch = 'Passwords do not match';
+    case PasswordInvalid = 'Invalid password provided';
+
 }
