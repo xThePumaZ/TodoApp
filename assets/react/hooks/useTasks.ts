@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { useTaskStore, Task, TasksByStatus } from '../store/taskStore';
 import { apiService, ApiService, CreateTaskRequest, UpdateTaskRequest, UpdateTaskStatusRequest } from '../services/apiService';
 
-// Helper function to show notifications
 const showNotification = {
     success: (title: string, message?: string) => {
         if (typeof window !== 'undefined' && window.notifications) {
@@ -44,7 +43,6 @@ export const useTasks = () => {
         reset
     } = useTaskStore();
 
-    // Fetch all tasks grouped by status
     const fetchTasks = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -55,7 +53,6 @@ export const useTasks = () => {
                 const parsedData: TasksByStatus = JSON.parse(response.data);
                 setTasksByStatus(parsedData);
 
-                // Also flatten tasks for the tasks array
                 const allTasks: Task[] = [];
                 Object.values(parsedData).forEach(statusTasks => {
                     allTasks.push(...statusTasks);
@@ -71,7 +68,6 @@ export const useTasks = () => {
         }
     }, [setLoading, setError, setTasksByStatus, setTasks]);
 
-    // Create a new task
     const createTask = useCallback(async (taskData: CreateTaskRequest): Promise<boolean> => {
         setLoading(true);
         setError(null);
@@ -94,7 +90,6 @@ export const useTasks = () => {
         }
     }, [setLoading, setError, fetchTasks]);
 
-    // Update an existing task
     const updateTaskData = useCallback(async (taskData: UpdateTaskRequest): Promise<boolean> => {
         setLoading(true);
         setError(null);
@@ -122,15 +117,12 @@ export const useTasks = () => {
         }
     }, [setLoading, setError, updateTask]);
 
-    // Update task status (for drag and drop)
     const updateTaskStatus = useCallback(async (taskId: number, newStatus: string): Promise<boolean> => {
         setLoading(true);
         setError(null);
 
         try {
             await apiService.updateTaskStatus({ id: taskId, status: newStatus });
-
-            // Update local state
             moveTask(taskId, newStatus);
 
             showNotification.success('Task status updated', `Task moved to ${newStatus}`);
@@ -145,17 +137,13 @@ export const useTasks = () => {
         }
     }, [setLoading, setError, moveTask]);
 
-    // Delete a task
     const removeTask = useCallback(async (taskId: number): Promise<boolean> => {
         setLoading(true);
         setError(null);
 
         try {
             await apiService.deleteTask(taskId);
-
-            // Update local state
             deleteTask(taskId);
-
             showNotification.success('Task deleted successfully', 'The task has been removed from your list');
             return true;
         } catch (error) {
@@ -168,15 +156,12 @@ export const useTasks = () => {
         }
     }, [setLoading, setError, deleteTask]);
 
-    // Optimistic update for task status (for better UX during drag and drop)
     const optimisticUpdateTaskStatus = useCallback(async (taskId: number, newStatus: string) => {
-        // Update UI immediately
         moveTask(taskId, newStatus);
 
         try {
             await apiService.updateTaskStatus({ id: taskId, status: newStatus });
         } catch (error) {
-            // Revert the optimistic update by refetching
             await fetchTasks();
             const errorMessage = ApiService.handleApiError(error);
             setError(errorMessage);

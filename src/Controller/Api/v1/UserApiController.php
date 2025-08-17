@@ -7,92 +7,176 @@ namespace App\Controller\Api\v1;
 use App\Config\StatusMessages;
 use App\Controller\BaseController;
 use App\Dto\UserPasswordDto;
-use App\Entity\User;
 use App\Form\ChangePasswordFormType;
 use App\Service\ProfilePictureService;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Attribuwte\Route;
 
 /**
- *
+ * API Controller für User-Management
  */
 class UserApiController extends BaseController
 {
+    private const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
     /**
-     * @param Request $request
-     * @param EntityManagerInterface $entityManager
-     * @return Response
+     * Ändert das Profilbild des Benutzers
      */
-    #[Route('/api/v1/user/change_picture', name: 'app_account_change_picture')]
+    #[Route('/api/v1/user/picture', name: 'app_account_change_picture', methods: ['PUT'])]
     public function changePicture(Request $request, EntityManagerInterface $entityManager): Response
     {
-        if (!$request->files->has('profileImage')) {
-            return BaseController::createResponse(StatusMessages::ProfilePictureNotProvided, Response::HTTP_BAD_REQUEST);
+        try {
+            $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
+            if (!$request->files->has('profileImage')) {
+                return BaseController::createResponse(StatusMessages::ProfilePictureNotProvided, Response::HTTP_BAD_REQUEST);
+            }
+
+            /** @var UploadedFile $file */
+            $file = $request->files->get('profileImage');
+            $validationResult = $this->validateUploadedFile($file);
+
+            if ($validationResult !== null) {
+                return $validationResult;
+            }
+
+            $profilePicture = base64_encode($file->getContent());
+            $user = $this->getUser();
+            $user->setProfilePicture($profilePicture);
+
+            $entityManager->flush();
+
+            return BaseController::createResponse(StatusMessages::ProfilePictureUpdated, Response::HTTP_OK);
+
+        } catch (Exception $e) {
+            return BaseController::createResponse(
+                StatusMessages::ProfilePictureUpdateFailed ?? 'Fehler beim Aktualisieren des Profilbilds',
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
-
-        $profilePicture = base64_encode($request->files->get('profileImage')->getContent());
-        $this->getUser()->setProfilePicture($profilePicture);
-        $entityManager->flush();
-
-        return BaseController::createResponse(StatusMessages::ProfilePictureUpdated);
     }
 
     /**
-     * @param EntityManagerInterface $entityManager
-     * @param ProfilePictureService $pictureService
-     * @return Response
+     * Lädt das Profilbild des Benutzers
      */
-    #[Route('/api/v1/user/loadProfilePicture', name: 'app_account_load_profile_picture')]
-    public function loadProfilePicture(EntityManagerInterface $entityManager, ProfilePictureService $pictureService): Response
+    #[Route('/api/v1/user/picture', name: 'app_account_load_profile_picture', methods: ['GET'])]
+    public function loadProfilePicture(ProfilePictureService $pictureService): Response
     {
-        if ($this->getUser()) {
-            $user = $entityManager->getRepository(User::class)->find($this->getUser()->getId());
+        try {
+            $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
+            $user = $this->getUser();
             $profilePicture = $user->getProfilePicture();
+
             if (!empty($profilePicture)) {
                 $imageData = is_resource($profilePicture) ? stream_get_contents($profilePicture) : $profilePicture;
-                return BaseController::createResponse(StatusMessages::ProfilePictureLoaded, Response::HTTP_OK, ['data:image/jpeg;base64, ' . $imageData,
-                ]);
-            } else {
-                return BaseController::createResponse(StatusMessages::ProfilePictureNotFound, Response::HTTP_OK, [
-                    'data:image/jpeg;base64, ' . $pictureService->getDefaultProfilePictureBase64(),
-                ]);
+                return BaseController::createResponse(
+                    StatusMessages::ProfilePictureLoaded,
+                    Response::HTTP_OK,
+                    ['image' => 'data:image/jpeg;base64,' . $imageData]
+                );
             }
-        } else {
-            return BaseController::createResponse(StatusMessages::UserNotFound, Response::HTTP_UNAUTHORIZED);
+
+            return BaseController::createResponse(
+                StatusMessages::ProfilePictureNotFound,
+                Response::HTTP_OK,
+                ['image' => 'data:image/jpeg;base64,' . $pictureService->getDefaultProfilePictureBase64()]
+            );
+
+        } catch (Exception $e) {
+            return BaseController::createResponse(
+                StatusMessages::ProfilePictureLoadFailed ?? 'Fehler beim Laden des Profilbilds',
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 
     /**
-     * @param Request $request
-     * @param EntityManagerInterface $entityManager
-     * @param UserPasswordHasherInterface $userPasswordHasher
-     * @return Response
+     * Ändert das Passwort des Benutzers
      */
-    #[Route('/api/v1/user/changePassword', name: 'app_account_change_password')]
-    public function changePassword(Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $userPasswordHasher): Response
+    #[Route('/api/v1/user/password', name: 'app_account_change_password', methods: ['PATCH'])]
+    public function changePassword(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        UserPasswordHasherInterface $userPasswordHasher
+    ): Response {
+        try {
+            $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+
+            $passwordDto = $this->mapPasswordDtoWithRequest($request);
+            $user = $this->getUser();
+
+            if (!$userPasswordHasher->isPasswordValid($user, $passwordDto->getCurrentPassword())) {
+                return BaseController::createResponse(
+                    StatusMessages::InvalidCurrentPassword ?? 'Aktuelles Passwort ist ungültig',
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
+            $form = $this->createForm(ChangePasswordFormType::class, $passwordDto);
+            $form->submit($request->getPayload()->all());
+
+            if (!$form->isValid()) {
+                return BaseController::createResponse(StatusMessages::TaskInvalidData, Response::HTTP_BAD_REQUEST);
+            }
+
+            if ($passwordDto->getNewPassword() !== $passwordDto->getConfirmPassword()) {
+                return BaseController::createResponse(StatusMessages::PasswordMismatch, Response::HTTP_BAD_REQUEST);
+            }
+
+            if ($userPasswordHasher->isPasswordValid($user, $passwordDto->getNewPassword())) {
+                return BaseController::createResponse(
+                    StatusMessages::PasswordNotChanged ?? 'Das neue Passwort muss sich vom aktuellen unterscheiden',
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
+            $user->setPassword($userPasswordHasher->hashPassword($user, $passwordDto->getNewPassword()));
+            $entityManager->flush();
+
+            return BaseController::createResponse(StatusMessages::PasswordUpdated, Response::HTTP_OK);
+
+        } catch (Exception $e) {
+            return BaseController::createResponse(
+                StatusMessages::PasswordUpdateFailed ?? 'Fehler beim Aktualisieren des Passworts',
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Validiert die hochgeladene Datei
+     */
+    private function validateUploadedFile(UploadedFile $file): ?Response
     {
-        $passwordDto = $this->mapPasswordDtoWithRequest($request);
-
-        $form = $this->createForm(ChangePasswordFormType::class, $passwordDto);
-        $form->submit($request->getPayload()->all());
-
-        if (!$form->isValid()) {
-            return BaseController::createResponse(StatusMessages::TaskInvalidData, Response::HTTP_BAD_REQUEST);
+        if (!$file->isValid()) {
+            return BaseController::createResponse(
+                StatusMessages::FileUploadError ?? 'Fehler beim Datei-Upload',
+                Response::HTTP_BAD_REQUEST
+            );
         }
 
-        if ($passwordDto->getNewPassword() !== $passwordDto->getConfirmPassword()) {
-            return BaseController::createResponse(StatusMessages::PasswordMismatch, Response::HTTP_BAD_REQUEST);
+        if ($file->getSize() > self::MAX_FILE_SIZE) {
+            return BaseController::createResponse(
+                StatusMessages::FileTooLarge ?? 'Datei ist zu groß (max. 5MB)',
+                Response::HTTP_BAD_REQUEST
+            );
         }
 
-        $user = $entityManager->getRepository(User::class)->find($this->getUser()->getId());
-        $user->setPassword($userPasswordHasher->hashPassword($user, $passwordDto->getNewPassword()));
+        if (!in_array($file->getMimeType(), self::ALLOWED_MIME_TYPES, true)) {
+            return BaseController::createResponse(
+                StatusMessages::InvalidFileType ?? 'Ungültiger Dateityp. Nur Bilder sind erlaubt.',
+                Response::HTTP_BAD_REQUEST
+            );
+        }
 
-        $entityManager->flush();
-        return BaseController::createResponse(StatusMessages::PasswordUpdated);
-
+        return null;
     }
 
     private function mapPasswordDtoWithRequest(Request $request): UserPasswordDto

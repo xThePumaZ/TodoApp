@@ -7,8 +7,11 @@ enum StatusMessages: string
     case TaskNotFound = 'Task not found';
     case TaskCreated = 'Task created successfully';
     case TaskUpdated = 'Task updated successfully';
+    case TaskUpdateFailed = 'Failed to update task';
+    case TaskRetrieved = 'Task retrieved successfully';
     case TaskStatusNotChanged = 'Task status not changed';
     case TaskDeleted = 'Task deleted successfully';
+    case TaskDeleteFailed = 'Failed to delete task';
 
     case TaskCreateFailed = 'Failed to create task';
 

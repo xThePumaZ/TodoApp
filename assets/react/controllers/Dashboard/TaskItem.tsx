@@ -99,7 +99,7 @@ export default function TaskItem({ task, csfr_token, onTaskUpdate, onTaskDelete 
 
             if (newStatus && newStatus !== currentStatus) {
                 // Update task status via optimistic update
-                optimisticUpdateTaskStatus(task.id, newStatus);
+                optimisticUpdateTaskStatus(task.id, newStatus).then();
                 // Call the callback to update the parent component
                 onTaskUpdate?.();
             }
@@ -133,8 +133,6 @@ export default function TaskItem({ task, csfr_token, onTaskUpdate, onTaskDelete 
             priority: taskData.priority || '',
             _token: taskData.csfr_token || csfr_token
         };
-
-        console.log(updateData);
 
         const success = await updateTask(updateData);
         if (success) {
@@ -178,7 +176,6 @@ export default function TaskItem({ task, csfr_token, onTaskUpdate, onTaskDelete 
                 return 'bg-gray-500';
         }
     };
-
     return (
         <div
             ref={taskItemRef}

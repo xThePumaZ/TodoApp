@@ -14,13 +14,12 @@ export class ApiError extends Error {
     }
 }
 
-// Task-related types
 export interface CreateTaskRequest {
     title: string;
     description?: string;
     priority: string;
     due_date?: string;
-    _token?: string; // Optional CSRF token for security
+    _token?: string;
 }
 
 export interface UpdateTaskRequest {
@@ -29,7 +28,7 @@ export interface UpdateTaskRequest {
     description?: string;
     priority?: string;
     due_date?: string;
-    _token?: string; // Optional CSRF token for security
+    _token?: string;
 }
 
 export interface UpdateTaskStatusRequest {
@@ -57,8 +56,6 @@ class ApiService {
 
         try {
             const response = await fetch(url, config);
-
-            // Handle different response types
             let data: any;
             const contentType = response.headers.get('content-type');
 
@@ -81,7 +78,6 @@ class ApiService {
                 throw error;
             }
 
-            // Network or other errors
             throw new ApiError({
                 message: error instanceof Error ? error.message : 'An unknown error occurred',
                 status: 0,
@@ -89,12 +85,10 @@ class ApiService {
         }
     }
 
-    // GET request
     private async get<T>(endpoint: string): Promise<T> {
         return this.request<T>(endpoint, { method: 'GET' });
     }
 
-    // POST request
     private async post<T>(endpoint: string, data?: any): Promise<T> {
         return this.request<T>(endpoint, {
             method: 'POST',
@@ -102,12 +96,24 @@ class ApiService {
         });
     }
 
-    // DELETE request
+    private async patch<T>(endpoint: string, data?: any): Promise<T> {
+        return this.request<T>(endpoint, {
+            method: 'PATCH',
+            body: data ? JSON.stringify(data) : undefined,
+        });
+    }
+
+    private async put<T>(endpoint: string, data?: any): Promise<T> {
+        return this.request<T>(endpoint, {
+            method: 'PUT',
+            body: data ? JSON.stringify(data) : undefined,
+        });
+    }
+
     private async delete<T>(endpoint: string): Promise<T> {
         return this.request<T>(endpoint, { method: 'DELETE' });
     }
 
-    // Task API methods
     async getTasks(): Promise<ApiResponse<string>> {
         return this.get<ApiResponse<string>>('/task/getTasksWithStatus');
     }
@@ -117,7 +123,7 @@ class ApiService {
     }
 
     async updateTask(taskData: UpdateTaskRequest): Promise<ApiResponse> {
-        return this.post<ApiResponse>('/task/editTask', taskData);
+        return this.put<ApiResponse>(`/task/edit/${taskData.id}`, taskData);
     }
 
     async updateTaskStatus(statusData: UpdateTaskStatusRequest): Promise<ApiResponse> {
@@ -125,10 +131,9 @@ class ApiService {
     }
 
     async deleteTask(taskId: number): Promise<ApiResponse> {
-        return this.post<ApiResponse>(`/task/delete?id=${taskId}`);
+        return this.delete<ApiResponse>(`/task/delete/${taskId}`);
     }
 
-    // User API methods
     async getCurrentUser(): Promise<ApiResponse> {
         return this.get<ApiResponse>('/user/current');
     }
@@ -163,7 +168,6 @@ class ApiService {
         });
     }
 
-    // Utility method to handle API errors consistently
     static handleApiError(error: unknown): string {
         if (error instanceof ApiError) {
             return error.message;
@@ -177,8 +181,6 @@ class ApiService {
     }
 }
 
-// Create and export a singleton instance
 export const apiService = new ApiService();
 
-// Export the ApiService class for static methods
 export { ApiService };

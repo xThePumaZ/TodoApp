@@ -2,10 +2,12 @@
 
 namespace App\Dto;
 
+use App\Config\Status;
+
 class TaskDto
 {
     private string $description;
-    private string $status;
+    private Status $status;
     private string $priority;
     private \DateTime|null $dueDate;
     private \DateTimeImmutable $createdAt;
@@ -44,12 +46,12 @@ class TaskDto
         $this->description = $description;
     }
 
-    public function getStatus(): string
+    public function getStatus(): Status
     {
         return $this->status;
     }
 
-    public function setStatus(string $status): void
+    public function setStatus(Status $status): void
     {
         $this->status = $status;
     }
@@ -106,7 +108,7 @@ class TaskDto
      * @param \DateTimeImmutable $createdAt
      * @param \DateTime $updatedAt
      */
-    public function __construct(int $id, string $title, string $description, string $status, string $priority, \DateTime|null $dueDate, \DateTimeImmutable $createdAt, \DateTime $updatedAt)
+    public function __construct(int $id, string $title, string $description, Status $status, string $priority, \DateTime|null $dueDate, \DateTimeImmutable $createdAt, \DateTime $updatedAt)
     {
         $this->id = $id;
         $this->title = $title;

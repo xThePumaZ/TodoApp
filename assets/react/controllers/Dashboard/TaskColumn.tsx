@@ -1,10 +1,12 @@
 import * as React from "react";
 import TaskItem from "./TaskItem";
-import { dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import {dropTargetForElements} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import { useTasks } from '../../hooks/useTasks';
 
-export default function TaskColumn({ status, tasks, csfr_token }) {
+export default function TaskColumn({status, tasks, csfr_token}) {
     const columnRef = React.useRef(null);
     const [isDragOver, setIsDragOver] = React.useState(false);
+    const { updateTaskStatus } = useTasks();
 
     React.useEffect(() => {
         const element = columnRef.current;
@@ -20,30 +22,11 @@ export default function TaskColumn({ status, tasks, csfr_token }) {
                 onDrop({source}) {
                     setIsDragOver(false);
                     const sourceData = source.data;
-                    const sourceStatus = sourceData.status || source.element.getAttribute('data-status');
-                    const taskId = sourceData.taskId || source.element.getAttribute('data-task-id');
+                    const sourceStatus: string = String(sourceData.status || source.element.getAttribute('data-status'));
+                    const taskId: number = Number(sourceData.taskId || source.element.getAttribute('data-task-id'));
 
                     if (status !== sourceStatus) {
-                        fetch(`/api/v1/task/updateStatus`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                id: taskId,
-                                status: status,
-                            }),
-                        }).then(r => {
-                            if (r.status === 200) {
-                                // Reload the page to reflect changes
-                                window.location.reload();
-                            } else {
-                                throw new Error('Network response was not ok');
-                            }
-                        }).catch(error => {
-                            console.error('Error updating task status:', error);
-                            alert('Error updating task status: ' + error.message);
-                        });
+                        updateTaskStatus(taskId, status).then();
                     }
                 },
             });
@@ -75,8 +58,8 @@ export default function TaskColumn({ status, tasks, csfr_token }) {
             setIsDragOver(false);
         };
 
-        document.addEventListener('touchmove', handleTouchMove, { passive: true });
-        document.addEventListener('touchend', handleTouchEnd, { passive: true });
+        document.addEventListener('touchmove', handleTouchMove, {passive: true});
+        document.addEventListener('touchend', handleTouchEnd, {passive: true});
 
         return () => {
             document.removeEventListener('touchmove', handleTouchMove);
@@ -87,7 +70,6 @@ export default function TaskColumn({ status, tasks, csfr_token }) {
     const capitalizeFirst = (str) => {
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     };
-
     return (
         <div
             ref={columnRef}
@@ -109,7 +91,8 @@ export default function TaskColumn({ status, tasks, csfr_token }) {
                         />
                     ))
                 ) : (
-                    <div className="text-gray-500 dark:text-gray-300 text-base sm:text-sm italic text-center py-8 sm:py-4">
+                    <div
+                        className="text-gray-500 dark:text-gray-300 text-base sm:text-sm italic text-center py-8 sm:py-4">
                         No tasks in this status
                     </div>
                 )}
